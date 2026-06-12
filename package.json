@@ -7,7 +7,8 @@
     "start": "node index.js",
     "google": "node google-hosted-libraries.js",
     "microsoft": "node microsoft-ajax.js",
-    "cdnjs": "node cdnjs.js"
+    "cdnjs": "node cdnjs.js",
+    "npm-popular": "node npm-popular.js"
   },
   "keywords": [],
   "author": "Thomas Steiner <tomac@google.com>",
