@@ -14,6 +14,7 @@ Scrapes popular CDN catalogs, downloads every listed `.js` and `.css` file, and 
 | [Google Hosted Libraries](https://developers.google.com/speed/libraries) | Scrapes the catalog page, reconstructs CDN URLs | [`google-hosted-libraries-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/google-hosted-libraries-hashes.csv) |
 | [Microsoft Ajax CDN](https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview) | Extracts URLs listed directly on the docs page | [`microsoft-ajax-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/microsoft-ajax-hashes.csv) |
 | [cdnjs](https://cdnjs.com) | Parses the top-100 most-requested resources from the last 12 months of [Cloudflare usage stats](https://github.com/cdnjs/cf-stats) | [`cdnjs-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/cdnjs-hashes.csv) |
+| [cdnjs](https://cdnjs.com) (npm-popular) | Cross-references the top 100 most-downloaded npm packages against cdnjs; hashes all `.js`/`.css` files for their latest version | [`npm-popular-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/npm-popular-hashes.csv) |
 
 A deduplicated combined file (unique by SHA-256 hash) is written to [`combined-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/combined-hashes.csv).
 
@@ -36,6 +37,8 @@ npm start
 # Run a single CDN only
 npm run google
 npm run microsoft
+npm run cdnjs
+npm run npm-popular
 ```
 
 Any URL that returns a non-200 status or times out after 6 seconds is silently omitted. For the Google CDN, known historical filename changes (MooTools, Indefinite Observable) are handled via fallback URL resolution.
