@@ -1,10 +1,12 @@
 {
-  "name": "google-hosted-libraries-sha256-hasher",
-  "version": "1.0.0",
-  "description": "Obtains the SHA256 hash of files hosted on Google Hosted Libraries.",
+  "name": "hosted-libraries-sha256-hasher",
+  "version": "2.0.0",
+  "description": "Computes SHA-256 hashes for files hosted on popular CDNs (Google Hosted Libraries, Microsoft Ajax CDN).",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "google": "node google-hosted-libraries.js",
+    "microsoft": "node microsoft-ajax.js"
   },
   "keywords": [],
   "author": "Thomas Steiner <tomac@google.com>",
