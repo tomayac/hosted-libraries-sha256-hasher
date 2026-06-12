@@ -14,7 +14,7 @@ Scrapes popular CDN catalogs, downloads every listed `.js` and `.css` file, and 
 | [Google Hosted Libraries](https://developers.google.com/speed/libraries) | Scrapes the catalog page, reconstructs CDN URLs | [`google-hosted-libraries-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/google-hosted-libraries-hashes.csv) |
 | [Microsoft Ajax CDN](https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview) | Extracts URLs listed directly on the docs page | [`microsoft-ajax-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/microsoft-ajax-hashes.csv) |
 
-A deduplicated master file combining all CDNs is written to [`all-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/all-hashes.csv).
+A deduplicated combined file (unique by SHA-256 hash) is written to [`combined-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/combined-hashes.csv).
 
 Each row contains the full CDN URL and its lowercase hex SHA-256 digest:
 
