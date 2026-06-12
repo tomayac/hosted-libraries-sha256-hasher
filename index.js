@@ -5,7 +5,7 @@ import fs from 'fs';
 import { run as runGoogle } from './google-hosted-libraries.js';
 import { run as runMicrosoft } from './microsoft-ajax.js';
 
-const MASTER_CSV = 'all-hashes.csv';
+const OUTPUT_CSV = 'combined-hashes.csv';
 
 async function main() {
   const [googleRecords, microsoftRecords] = await Promise.all([
@@ -13,25 +13,26 @@ async function main() {
     runMicrosoft(),
   ]);
 
-  // Deduplicate by URL across all CDNs, preserving first-seen order
+  // Deduplicate by SHA-256 hash — same content served from multiple CDNs counts once
   const seen = new Set();
-  const merged = [];
+  const combined = [];
   for (const record of [...googleRecords, ...microsoftRecords]) {
-    if (!seen.has(record.url)) {
-      seen.add(record.url);
-      merged.push(record);
+    if (!seen.has(record.sha256)) {
+      seen.add(record.sha256);
+      combined.push(record);
     }
   }
 
-  const writeStream = fs.createWriteStream(MASTER_CSV, { encoding: 'utf8' });
+  const writeStream = fs.createWriteStream(OUTPUT_CSV, { encoding: 'utf8' });
   writeStream.write('url,sha256\n');
-  for (const { url, sha256 } of merged) {
+  for (const { url, sha256 } of combined) {
     const escaped = url.includes(',') ? `"${url}"` : url;
     writeStream.write(`${escaped},${sha256}\n`);
   }
   writeStream.end();
 
-  console.log(`\nMaster CSV: ${merged.length} deduplicated records saved to '${MASTER_CSV}'.`);
+  const total = googleRecords.length + microsoftRecords.length;
+  console.log(`\nCombined: ${combined.length} unique records (from ${total} total) saved to '${OUTPUT_CSV}'.`);
 }
 
 main().catch(err => { console.error(err.message); process.exit(1); });
