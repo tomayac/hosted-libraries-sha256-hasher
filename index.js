@@ -2,21 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import fs from 'fs';
+import { run as runCdnjs } from './cdnjs.js';
 import { run as runGoogle } from './google-hosted-libraries.js';
 import { run as runMicrosoft } from './microsoft-ajax.js';
 
 const OUTPUT_CSV = 'combined-hashes.csv';
 
 async function main() {
-  const [googleRecords, microsoftRecords] = await Promise.all([
+  const [googleRecords, microsoftRecords, cdnjsRecords] = await Promise.all([
     runGoogle(),
     runMicrosoft(),
+    runCdnjs(),
   ]);
 
   // Deduplicate by SHA-256 hash — same content served from multiple CDNs counts once
   const seen = new Set();
   const combined = [];
-  for (const record of [...googleRecords, ...microsoftRecords]) {
+  for (const record of [...googleRecords, ...microsoftRecords, ...cdnjsRecords]) {
     if (!seen.has(record.sha256)) {
       seen.add(record.sha256);
       combined.push(record);
@@ -31,7 +33,7 @@ async function main() {
   }
   writeStream.end();
 
-  const total = googleRecords.length + microsoftRecords.length;
+  const total = googleRecords.length + microsoftRecords.length + cdnjsRecords.length;
   console.log(`\nCombined: ${combined.length} unique records (from ${total} total) saved to '${OUTPUT_CSV}'.`);
 }
 
