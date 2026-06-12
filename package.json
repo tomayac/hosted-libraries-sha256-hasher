@@ -1,0 +1,17 @@
+{
+  "name": "google-hosted-libraries-sha256-hasher",
+  "version": "1.0.0",
+  "description": "Obtains the SHA256 hash of files hosted on Google Hosted Libraries.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "Thomas Steiner <tomac@google.com>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.17.0",
+    "cheerio": "^1.2.0"
+  }
+}
