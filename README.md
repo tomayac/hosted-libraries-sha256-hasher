@@ -33,6 +33,7 @@ real-world popularity, so only genuinely ubiquitous resources are included.
 | [Microsoft Ajax CDN](https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview)                                                                                    | Extracts URLs listed directly on the docs page                                                                                                                                                                                               | [`data/microsoft-ajax-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/microsoft-ajax-hashes.csv)                   |
 | [cdnjs](https://cdnjs.com)                                                                                                                                          | Parses the top-100 most-requested resources from the last 12 months of [Cloudflare usage stats](https://github.com/cdnjs/cf-stats)                                                                                                           | [`data/cdnjs-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/cdnjs-hashes.csv)                                     |
 | [jsDelivr](https://www.jsdelivr.com)                                                                                                                               | Fetches the top 100 npm packages by actual jsDelivr CDN hit count (last month); resolves each to its latest stable version; hashes the canonical JS and CSS entry points identified by jsDelivr's entrypoints API                           | [`data/jsdelivr-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/jsdelivr-hashes.csv)                               |
+| [npm popularity](https://www.npmjs.com)                                                                                                                             | Ranks cdnjs-hosted packages by npm download count; hashes all web-relevant files for the top 100's latest version on cdnjs (see below)                                                                                                      | [`data/npm-popular-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/npm-popular-hashes.csv)                         |
 | [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h)      | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-tracking URL in it; resolves the current version of Google Maps and YouTube Player from their respective bootstrap endpoints (see below); reCAPTCHA patterns are intentionally skipped (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/chromium-pervasive-hashes.csv)           |
 | [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_                                                                                          | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below)                                  | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/youtube-player-hashes.csv)                   |
 | [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_                                                     | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes the same 16 JS files per version that Chromium tracks (see below)                                                                        | [`data/google-maps-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-maps-hashes.csv)                         |
@@ -73,6 +74,40 @@ The pipeline uses three API calls per package:
    the canonical JS and CSS file for the package, determined by jsDelivr's
    heuristics over package metadata and real usage patterns. This is more
    reliable than guessing from a raw file listing.
+
+### How the npm popularity pipeline works
+
+The npm pipeline is forward-looking: it seeds the allowlist with packages that
+are universally used across the JS ecosystem, regardless of whether they are
+currently loaded from a CDN. The goal is to help drive a future where
+frameworks and libraries that are today bundled into every app are instead
+loaded from shared CDN URLs and found pre-cached via COS.
+
+A package downloaded 50 million times a month by independent projects is, by
+definition, a candidate for cross-origin sharing — even if the ecosystem hasn't
+yet converged on loading it that way. React is the canonical example: today
+almost everyone bundles it, but a React 20 designed around COS-friendly CDN
+loading would benefit immediately from an allowlist that already contains its
+hashes.
+
+The pipeline uses three steps:
+
+1. **Seed** — fetch the top 1,000 packages from the
+   [cdnjs API](https://api.cdnjs.com/libraries?fields=name&limit=1000) (cdnjs's
+   own popularity-sorted catalog). This constrains candidates to libraries that
+   have a stable CDN-hosted artifact, which is the prerequisite for COS sharing.
+
+2. **Name resolution** — for each cdnjs library, fetch its package config from
+   the [cdnjs/packages](https://github.com/cdnjs/packages) repo and read
+   `autoupdate.target` to get the canonical npm package name. Many cdnjs names
+   differ from their npm equivalents (e.g. `three.js` → `three`, `moment.js` →
+   `moment`); this step corrects ~140 of the 1,000 entries.
+
+3. **Ranking** — batch-query the
+   [npm downloads API](https://api.npmjs.org/downloads/point/last-month/) with
+   the resolved npm names to get last-month download counts. Sort descending,
+   take the top 100, and hash all web-relevant files for each package's latest
+   cdnjs version.
 
 ### How the Chromium-extended pipelines work
 
@@ -129,6 +164,7 @@ npm run google-maps
 npm run microsoft
 npm run cdnjs
 npm run jsdelivr
+npm run npm-popular
 npm run chromium
 npm run youtube
 ```
