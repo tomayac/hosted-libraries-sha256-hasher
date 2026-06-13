@@ -27,9 +27,23 @@ const YOUTUBE_PATTERN =
 // that Google deliberately rotates to stay ahead of adversaries — COS caching would
 // undermine that. reCAPTCHA is not a suitable COS candidate.
 
-// Deterministic ads/tracking domain blocklist. Applied to every URL regardless
-// of versioning. These hosts deliver tracking pixels, ad scripts, and similar
-// content that is not in users' interests to cache via Cross-Origin Storage.
+// Hosts excluded from hashing, for two distinct reasons:
+//
+// 1. URL PATTERN RESOLUTION (the primary reason this list exists): the Chromium
+//    pervasive list contains :v URL patterns for some tracking/ad hosts. Resolving
+//    those patterns and adding the files to the COS allowlist would let them
+//    persist in the cross-site shared cache, potentially undermining per-request
+//    tracking protections. We refuse to fill in :v for these hosts at all.
+//
+// 2. CONCRETE URLS: a handful of these hosts also appear as concrete (non-pattern)
+//    versioned URLs in the Chromium list (e.g. google-analytics.com/analytics.js).
+//    These are excluded because their files are security-sensitive in the same way
+//    as reCAPTCHA — they carry tracking/fingerprinting logic that the vendor
+//    deliberately rotates, and COS caching would undermine that rotation.
+//    This is NOT a general editorial stance on ad-tech: ubiquitous ad files from
+//    other sources (e.g. jsDelivr top-100) are valid COS candidates and are
+//    included without filtering.
+//
 // Must remain code-driven: the Chromium pattern list is auto-generated and evolves.
 const BLOCKED_HOSTS = new Set([
   'a.amxrtb.com',                   // ad tech
