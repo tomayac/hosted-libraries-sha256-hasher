@@ -61,6 +61,8 @@ const BLOCKED_HOSTS = new Set([
 //   /vN/ segment     /v19/
 //   hex hash         .92255d46. — 8+ hex chars surrounded by . or -
 //   alphanumeric hash  16+ [0-9a-z] chars in the filename component
+//   hash path segment  entire path segment is 16+ [0-9a-z] chars (e.g. reCAPTCHA
+//                      release tokens like /ne1iDVwClkE7nKD3uA9Vqsvl/)
 //   long numeric ID  7+ consecutive digits followed by -, ., or /
 function isStable(url) {
   let pathname;
@@ -69,7 +71,8 @@ function isStable(url) {
   } catch {
     return false;
   }
-  const filename = pathname.split('/').at(-1) ?? '';
+  const segments = pathname.split('/').filter(Boolean);
+  const filename = segments.at(-1) ?? '';
   return (
     /\d+\.\d+\.\d+/.test(pathname) ||
     /\/\d+\.\d+\//.test(pathname) ||
@@ -77,6 +80,7 @@ function isStable(url) {
     /\/v\d+\//.test(pathname) ||
     /[.-][0-9a-f]{8}[0-9a-f]*[.-]/i.test(pathname) ||
     /\b[0-9a-z]{16,}\b/i.test(filename) ||
+    segments.some((s) => /^[0-9a-z]{16,}$/i.test(s)) ||
     /\/\d{7,}[-.\/]/.test(pathname)
   );
 }
