@@ -25,19 +25,19 @@ about a user's browsing history. This project generates that allowlist by
 gathering SHA-256 hashes from hand-curated CDNs and ranking candidates by
 real-world popularity, so only genuinely ubiquitous resources are included.
 
-## Supported CDNs
+## Supported sources
 
-| CDN                                                                                                                                                              | Source                                                                                                                                                                                       | Output                                                                                                                                         |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Google Hosted Libraries](https://developers.google.com/speed/libraries)                                                                                         | Scrapes the catalog page, reconstructs CDN URLs                                                                                                                                              | [`data/google-hosted-libraries-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-hosted-libraries-hashes.csv) |
-| [Microsoft Ajax CDN](https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview)                                                                                 | Extracts URLs listed directly on the docs page                                                                                                                                               | [`data/microsoft-ajax-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/microsoft-ajax-hashes.csv)                   |
-| [cdnjs](https://cdnjs.com)                                                                                                                                       | Parses the top-100 most-requested resources from the last 12 months of [Cloudflare usage stats](https://github.com/cdnjs/cf-stats)                                                           | [`data/cdnjs-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/cdnjs-hashes.csv)                                     |
-| [cdnjs](https://cdnjs.com) via npm popularity                                                                                                                    | Ranks cdnjs-hosted packages by npm download count; hashes all `.js`, `.css`, `.wasm`, web font, JSON, and other web-relevant files for the top 100's latest version (see below)                                                                | [`data/npm-popular-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/npm-popular-hashes.csv)                         |
-| [Chromium pervasive resources](https://source.chromium.org/chromium/chromium/src/+/main:services/network/pervasive_resources/shared_resource_checker_patterns.h) | Extracts versioned, non-tracking `.js`, `.css`, `.wasm`, web font, JSON, and other web-relevant URLs from Chromium's pervasive resource allowlist; resolves Google Maps, YouTube Player, and reCAPTCHA version patterns dynamically; excludes ads/tracking domains and unversioned URLs via deterministic code | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/chromium-pervasive-hashes.csv)           |
-| [YouTube Player](https://www.youtube.com/iframe_api)                                                                                                             | Discovers the current player ID from the iframe API bootstrap and seeds from all historical IDs at [nadeko.net](https://youtube-player-ids.nadeko.net/); hashes all five per-version file types: `base.js`, `captions.js`, `www-player.css`, `www-widgetapi.js`, and the youtube-nocookie.com mirror of `www-player.css` (approach from [youtube-player-id-logger](https://codeberg.org/Fijxu/youtube-player-id-logger)) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/youtube-player-hashes.csv)                   |
-| [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript)                                                                        | Probes each quarterly version (rolling window around current) via the versioned bootstrap URL (`?v=3.NN`), extracts the internal `(channel, release)` pair from the self-referencing CDN path, and hashes all 16 non-intl JS files per version tracked in Chromium's pervasive list (`common.js`, `controls.js`, `geocoder.js`, `geometry.js`, `infowindow.js`, `log.js`, `main.js`, `map.js`, `marker.js`, `onion.js`, `places_impl.js`, `search.js`, `search_impl.js`, `util.js` on `maps.googleapis.com`; `common.js` and `util.js` on the `maps.google.com` mirror); deduplicates builds that share the same internal pair | [`data/google-maps-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-maps-hashes.csv)                         |
+| Source                                                                                                                                                              | Method                                                                                                                                                                                                                                       | Output                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Google Hosted Libraries](https://developers.google.com/speed/libraries)                                                                                            | Scrapes the catalog page, reconstructs CDN URLs                                                                                                                                                                                              | [`data/google-hosted-libraries-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-hosted-libraries-hashes.csv) |
+| [Microsoft Ajax CDN](https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview)                                                                                    | Extracts URLs listed directly on the docs page                                                                                                                                                                                               | [`data/microsoft-ajax-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/microsoft-ajax-hashes.csv)                   |
+| [cdnjs](https://cdnjs.com)                                                                                                                                          | Parses the top-100 most-requested resources from the last 12 months of [Cloudflare usage stats](https://github.com/cdnjs/cf-stats)                                                                                                           | [`data/cdnjs-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/cdnjs-hashes.csv)                                     |
+| [cdnjs](https://cdnjs.com) via npm popularity                                                                                                                       | Ranks cdnjs-hosted packages by npm download count; hashes all web-relevant files for the top 100's latest version (see below)                                                                                                                | [`data/npm-popular-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/npm-popular-hashes.csv)                         |
+| [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h)      | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-tracking URL in it; resolves the current version of Google Maps, YouTube Player, and reCAPTCHA from their respective bootstrap endpoints (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/chromium-pervasive-hashes.csv)           |
+| [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_                                                                                          | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below)                                  | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/youtube-player-hashes.csv)                   |
+| [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_                                                     | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes the same 16 JS files per version that Chromium tracks (see below)                                                                        | [`data/google-maps-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-maps-hashes.csv)                         |
 
-A combined file with all CDN mirrors is written to
+A combined file with all sources is written to
 [`data/combined-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/combined-hashes.csv).
 Rows are sorted by SHA-256 hash so all mirrors of the same file appear together;
 exact `(sha256, url)` duplicates are removed.
@@ -50,7 +50,7 @@ f2094bbf6141b359722c4fe454eb6c4b0f0e42cc10cc7af921fc158fceb86539,https://ajax.go
 f2094bbf6141b359722c4fe454eb6c4b0f0e42cc10cc7af921fc158fceb86539,https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js
 ```
 
-The per-CDN files follow the same format and are also sorted by hash.
+The per-source files follow the same format and are also sorted by hash.
 
 ### How npm popularity ranking works
 
@@ -72,8 +72,47 @@ ranking:
 3. **Ranking** — batch-query the
    [npm downloads API](https://api.npmjs.org/downloads/point/last-month/) with
    the resolved npm names to get last-month download counts. Sort descending,
-   take the top 100, and hash all `.js`, `.css`, `.wasm`, web font, JSON, and other web-relevant files for each package's latest
+   take the top 100, and hash all web-relevant files for each package's latest
    cdnjs version.
+
+### How the Chromium-extended pipelines work
+
+Chromium's pervasive resource list
+([`shared_resource_checker_patterns.h`](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h))
+includes URL patterns for the YouTube Player and Google Maps JavaScript API
+using `:v` placeholders for the version component. The `chromium-pervasive`
+scraper resolves these to the **current** version at run time by fetching each
+service's bootstrap endpoint. That covers what Chromium itself knows about, but
+both services have a meaningful history of versions that are still actively
+served and cached by browsers — versions that are also legitimately
+shareable across sites via COS.
+
+Two dedicated scrapers extend the Chromium dataset with that history:
+
+**YouTube Player** (`youtube-player.js`): Chromium's list contains five URL
+patterns per player version (`base.js`, `captions.js`, `www-player.css`,
+`www-widgetapi.js`, and the `youtube-nocookie.com` mirror of `www-player.css`).
+The `chromium-pervasive` scraper resolves these for the current player ID only.
+`youtube-player.js` additionally fetches all historical player IDs from
+[nadeko.net](https://youtube-player-ids.nadeko.net/) — a public log that tracks
+every player version ever rolled out — and hashes the same five files for each.
+The current version's URLs appear in both outputs and are deduplicated in
+`combined-hashes.csv`.
+
+**Google Maps JavaScript API** (`google-maps.js`): Chromium's list contains 16
+URL patterns per Maps version (14 files on `maps.googleapis.com` — `common.js`,
+`controls.js`, `geocoder.js`, `geometry.js`, `infowindow.js`, `log.js`,
+`main.js`, `map.js`, `marker.js`, `onion.js`, `places_impl.js`, `search.js`,
+`search_impl.js`, `util.js` — plus `common.js` and `util.js` on the
+`maps.google.com` mirror). The `chromium-pervasive` scraper resolves these for
+the current version only. `google-maps.js` additionally probes a rolling window
+of quarterly versions (3.NN) via their versioned bootstrap URLs (`?v=3.NN`),
+extracts the internal `(channel, release)` pair that each bootstrap
+self-references, and hashes all 16 files for every version Google currently
+serves (typically the four most recent quarterly releases). The version window
+is computed from the current date so no manual updates are needed as new
+versions ship. The current version's URLs appear in both outputs and are
+deduplicated in `combined-hashes.csv`.
 
 ## Usage
 
