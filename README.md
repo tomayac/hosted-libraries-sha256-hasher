@@ -52,19 +52,15 @@ f2094bbf6141b359722c4fe454eb6c4b0f0e42cc10cc7af921fc158fceb86539,https://cdnjs.c
 
 The per-source files follow the same format and are also sorted by hash.
 
-### Why jsDelivr hit count, not npm download count
+### How the jsDelivr pipeline works
 
-The previous pipeline ranked packages by npm download count. npm downloads
-measure popularity in `node_modules` — the vast majority of which are bundled
-into apps and never loaded from a CDN at all. A package can have tens of
-millions of npm downloads per month and zero cross-origin CDN requests.
+jsDelivr's stats API ranks packages by actual CDN hit count — real browser
+requests to `cdn.jsdelivr.net`. A file that gets billions of CDN hits per
+month is loaded cross-origin by so many unrelated sites that its presence in
+cache reveals nothing about a user's browsing history, which is the COS
+fitness criterion.
 
-The COS allowlist needs CDN-request ubiquity: files that are actually loaded
-cross-origin by browsers across many unrelated sites, so that their presence
-in cache is non-identifying. jsDelivr's hit count is that signal directly —
-it counts real browser requests to `cdn.jsdelivr.net`, not npm installs.
-
-The jsDelivr pipeline uses three API calls per package:
+The pipeline uses three API calls per package:
 
 1. **Top packages** — `GET /v1/stats/packages?by=hits&type=npm&period=month&limit=200`
    returns the top npm packages by CDN hit count. GitHub-type packages are
@@ -102,7 +98,9 @@ every player version ever rolled out — and hashes the same five files for each
 The current version's URLs appear in both outputs and are deduplicated in
 `combined-hashes.csv`.
 
-**reCAPTCHA** (`recaptcha/releases/:v/...`): intentionally excluded. The release token rotates frequently and opaquely — there is no public version log and no documented cadence — so any hashed file becomes stale almost immediately and the allowlist provides no meaningful sharing benefit. More fundamentally, the `recaptcha__*.js` files carry active bot-detection logic that Google deliberately rotates to stay ahead of adversaries; COS caching of these files would directly undermine that goal. The `styles__ltr.css` file is technically hashable but not worth including given how short-lived each token is in practice. Chromium's list contains 16
+**reCAPTCHA** (`recaptcha/releases/:v/...`): intentionally excluded. The release token rotates frequently and opaquely — there is no public version log and no documented cadence — so any hashed file becomes stale almost immediately and the allowlist provides no meaningful sharing benefit. More fundamentally, the `recaptcha__*.js` files carry active bot-detection logic that Google deliberately rotates to stay ahead of adversaries; COS caching of these files would directly undermine that goal. The `styles__ltr.css` file is technically hashable but not worth including given how short-lived each token is in practice.
+
+**Google Maps JavaScript API** (`google-maps.js`): Chromium's list contains 16
 URL patterns per Maps version (14 files on `maps.googleapis.com` — `common.js`,
 `controls.js`, `geocoder.js`, `geometry.js`, `infowindow.js`, `log.js`,
 `main.js`, `map.js`, `marker.js`, `onion.js`, `places_impl.js`, `search.js`,
