@@ -24,19 +24,8 @@ const UA =
   'hosted-libraries-sha256-hasher (https://github.com/tomayac/hosted-libraries-sha256-hasher)';
 const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|svg|gz)$/i;
 
-// Packages whose CDN hit counts are dominated by ad-tech, tracking, or
-// programmatic ad infrastructure rather than shared library usage.
-// Kept minimal and code-driven — only clear-cut cases where the entire
-// package is ad/tracking infrastructure, not legitimate shared resources
-// that happen to be used by ad networks too.
-const BLOCKED_PACKAGES = new Set([
-  'prebid-universal-creative', // programmatic ad creative rendering
-  'search-insights',           // Algolia Analytics / ad conversion tracking
-]);
-
 // Fetches the top packages by CDN hits. Returns only npm-type entries
-// (GitHub repos don't follow the stable semver CDN URL pattern we need)
-// with blocked packages removed.
+// (GitHub repos don't follow the stable semver CDN URL pattern we need).
 async function getTopPackages() {
   // The API returns npm and gh packages mixed; fetch enough to get TOP_N npm
   // entries after filtering. 250 gives comfortable headroom.
@@ -45,11 +34,7 @@ async function getTopPackages() {
     headers: { 'User-Agent': UA },
   });
 
-  const npm = data
-    .filter((p) => p.type === 'npm' && !BLOCKED_PACKAGES.has(p.name))
-    .slice(0, TOP_N);
-
-  return npm;
+  return data.filter((p) => p.type === 'npm').slice(0, TOP_N);
 }
 
 // Returns the latest stable version for a package, or null.

@@ -68,10 +68,7 @@ The jsDelivr pipeline uses three API calls per package:
 
 1. **Top packages** — `GET /v1/stats/packages?by=hits&type=npm&period=month&limit=200`
    returns the top npm packages by CDN hit count. GitHub-type packages are
-   excluded (they don't follow stable semver CDN URL patterns). A small
-   blocklist removes clear-cut ad-tech packages (`prebid-universal-creative`,
-   `search-insights`) whose hit counts reflect programmatic ad infrastructure
-   rather than shared library usage.
+   excluded (they don't follow stable semver CDN URL patterns).
 
 2. **Version resolution** — `GET /v1/packages/npm/:pkg/resolved` returns the
    latest stable version, used to construct the pinned CDN URL.
