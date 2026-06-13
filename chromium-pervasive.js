@@ -162,7 +162,12 @@ function tryResolve(pattern, { mapsVersions, youtubePlayerId, recaptchaVersion }
   }
 
   // reCAPTCHA: :v = release version hash
-  // Patterns that also contain wildcards (recaptcha__*.js) remain unresolvable here.
+  // Patterns that also contain wildcards (recaptcha__*.js) remain unresolvable here —
+  // the * is a locale suffix (e.g. recaptcha__en.js, recaptcha__fr.js) and Google
+  // does not publish the locale list. Only styles__ltr.css is a concrete resolvable
+  // file. Unlike YouTube and Maps, reCAPTCHA has no public version history log and
+  // no documented release cadence, so a dedicated historical scraper is not viable;
+  // resolving the current version here is the extent of what's discoverable.
   if (RECAPTCHA_PATTERN.test(pattern) && recaptchaVersion) {
     const url = pattern.replace(':v', recaptchaVersion);
     if (!HAS_PATTERN.test(url)) return url;
