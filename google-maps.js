@@ -28,13 +28,28 @@ export const OUTPUT_CSV = 'data/google-maps-hashes.csv';
 const BOOTSTRAP_URL = 'https://maps.googleapis.com/maps/api/js';
 
 // The files Chromium's pervasive resource list tracks per Maps version.
-// Matches the :v1/:v2 patterns in shared_resource_checker_patterns.h,
-// excluding :v3 intl variants (those return 404 without an API key).
+// Derived from the non-:v3 patterns in shared_resource_checker_patterns.h.
+// The :v3 intl/* variants are omitted — they require a locale substitution
+// that isn't resolved by getMapsVersions() and return 404 without an API key.
 const MAPS_FILES = [
+  // maps.google.com mirror (2 files)
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/common.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/util.js`,
+  // maps.googleapis.com (14 files)
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/common.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/controls.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/geocoder.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/geometry.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/infowindow.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/log.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/main.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/map.js`,
-  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/main.js`,
-  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/map.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/marker.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/onion.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/places_impl.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/search.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/search_impl.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/util.js`,
 ];
 
 // Quarterly versions to probe. Google keeps the 4 most recent; we probe a
