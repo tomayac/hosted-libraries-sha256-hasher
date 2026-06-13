@@ -9,7 +9,7 @@ import { getSha256 } from './shared.js';
 // Chromium's pervasive resource allowlist: concrete URLs observed across many sites.
 // Source: services/network/pervasive_resources/shared_resource_checker_patterns.h
 const SOURCE_URL =
-  'https://chromium.googlesource.com/chromium/src/+/main/services/network/pervasive_resources/shared_resource_checker_patterns.h?format=TEXT';
+  'https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h?format=TEXT';
 export const OUTPUT_CSV = 'data/chromium-pervasive-hashes.csv';
 const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|eot|svg|xml|gz|br)$/i;
 const HAS_PATTERN = /[*]|:[a-z]/i;
