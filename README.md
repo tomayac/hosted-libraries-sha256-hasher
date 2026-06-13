@@ -25,7 +25,7 @@ about a user's browsing history. This project generates that allowlist by
 gathering SHA-256 hashes from hand-curated CDNs and ranking candidates by
 real-world popularity.
 
-### This works today
+## This works today
 
 The [vite-plugin-cross-origin-storage](https://github.com/tomayac/vite-plugin-cross-origin-storage)
 plugin demonstrates the full pipeline in practice: it splits bundled
@@ -49,7 +49,7 @@ COS sharing regardless of how they are currently loaded.
 | [cdnjs](https://cdnjs.com) | Parses the top-100 most-requested resources from the last 12 months of [Cloudflare usage stats](https://github.com/cdnjs/cf-stats) | [`data/cdnjs-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/cdnjs-hashes.csv) |
 | [jsDelivr](https://www.jsdelivr.com) | Fetches the top 100 npm packages by actual jsDelivr CDN hit count (last month); resolves each to its latest stable version; hashes the canonical JS and CSS entry points identified by jsDelivr's entrypoints API | [`data/jsdelivr-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/jsdelivr-hashes.csv) |
 | [npm popularity](https://www.npmjs.com) | Ranks cdnjs-hosted packages by npm download count; hashes all web-relevant files for the top 100's latest version on cdnjs (see below) | [`data/npm-popular-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/npm-popular-hashes.csv) |
-| [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h) | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-tracking URL in it; resolves the current version of Google Maps and YouTube Player from their respective bootstrap endpoints (see below); reCAPTCHA patterns are intentionally skipped (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/chromium-pervasive-hashes.csv) |
+| [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h) | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-rotating URL in it; resolves the current version of Google Maps and YouTube Player from their respective bootstrap endpoints; certain hosts are excluded from pattern resolution (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/chromium-pervasive-hashes.csv) |
 | [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_ | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/youtube-player-hashes.csv) |
 | [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_ | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes the same 16 JS files per version that Chromium tracks (see below) | [`data/google-maps-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-maps-hashes.csv) |
 
@@ -129,9 +129,9 @@ Chromium's pervasive resource list
 ([`shared_resource_checker_patterns.h`](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h))
 contains URL patterns for resources observed across many sites, with `:v`
 placeholders for version components. The `chromium-pervasive` scraper resolves
-these to the **current** version at run time. Both YouTube and Google Maps have
+these to the **current** version at run time. YouTube and Google Maps have
 a meaningful history of versions still actively served and cached, so two
-dedicated scrapers extend the Chromium dataset with that history.
+dedicated scrapers extend that coverage with historical versions.
 
 **YouTube Player** (`youtube-player.js`): Chromium tracks five URL patterns per
 player version (`base.js`, `captions.js`, `www-player.css`,
@@ -140,14 +140,6 @@ player version (`base.js`, `captions.js`, `www-player.css`,
 [nadeko.net](https://youtube-player-ids.nadeko.net/) and hashes the same five
 files for each. The current version's URLs appear in both outputs and are
 deduplicated in `combined-hashes.csv`.
-
-**reCAPTCHA** (`recaptcha/releases/:v/...`): intentionally excluded. The
-release token rotates frequently and opaquely with no public version log, so
-hashes go stale almost immediately. More fundamentally, the `recaptcha__*.js`
-files carry active bot-detection logic that Google deliberately rotates to stay
-ahead of adversaries; COS caching would directly undermine that. The
-`styles__ltr.css` file is technically hashable but not worth including given how
-short-lived each token is.
 
 **Google Maps JavaScript API** (`google-maps.js`): Chromium tracks 16 URL
 patterns per Maps version — 14 files on `maps.googleapis.com` (`common.js`,
@@ -160,7 +152,7 @@ versions (3.NN) derived from the current date, extracts each version's internal
 files. The version window updates automatically so no manual changes are needed
 as new versions ship.
 
-### Excluded: tracking and security-sensitive domains
+### URL pattern resolution: excluded hosts
 
 Some hosts in the Chromium pervasive list are excluded from URL pattern
 resolution. This is not a COS fitness judgment — ubiquitous files from any
@@ -170,6 +162,14 @@ allowlist could undermine per-request tracking protections by allowing those
 files to persist in a shared cross-origin cache. Concrete versioned URLs from
 those hosts that appear directly in the Chromium list (without `:v` placeholders)
 are not blocked — they are stable, widely cached, and appropriate COS candidates.
+
+**reCAPTCHA** (`recaptcha/releases/:v/...`) is also excluded, for a different
+reason: the release token rotates frequently and opaquely with no public version
+log, so hashes go stale almost immediately. More fundamentally, the
+`recaptcha__*.js` files carry active bot-detection logic that Google deliberately
+rotates to stay ahead of adversaries; COS caching would directly undermine that.
+The `styles__ltr.css` file is technically hashable but not worth including given
+how short-lived each token is.
 
 ## Usage
 
