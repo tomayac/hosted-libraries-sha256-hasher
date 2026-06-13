@@ -19,8 +19,13 @@ const MAPS_PATTERN =
   /^https:\/\/maps(?:\.google\.com|\.googleapis\.com)\/maps-api-v3\/api\/js\//;
 const YOUTUBE_PATTERN =
   /^https:\/\/www\.(youtube\.com|youtube-nocookie\.com)\/s\/player\//;
-const RECAPTCHA_PATTERN =
-  /^https:\/\/www\.gstatic\.com\/recaptcha\/releases\//;
+
+// reCAPTCHA patterns (/recaptcha/releases/:v/...) are intentionally NOT resolved here.
+// styles__ltr.css is technically hashable but reCAPTCHA's release token rotates
+// frequently and opaquely, so any cached hash becomes stale almost immediately.
+// More importantly, the JS files (recaptcha__*.js) carry active bot-detection logic
+// that Google deliberately rotates to stay ahead of adversaries — COS caching would
+// undermine that. reCAPTCHA is not a suitable COS candidate.
 
 // Deterministic ads/tracking domain blocklist. Applied to every URL regardless
 // of versioning. These hosts deliver tracking pixels, ad scripts, and similar
@@ -119,27 +124,12 @@ async function getYouTubePlayerId() {
   }
 }
 
-// Discovers the current reCAPTCHA release version from the api.js bootstrap.
-// Example version string: "ne1iDVwClkE7nKD3uA9Vqsvl"
-async function getRecaptchaVersion() {
-  try {
-    const { data } = await axios.get(
-      'https://www.google.com/recaptcha/api.js',
-      { responseType: 'text', timeout: 10000 }
-    );
-    const match = data.match(/releases\/([A-Za-z0-9_-]+)/);
-    return match ? match[1] : null;
-  } catch {
-    return null;
-  }
-}
-
 // Attempts to resolve a URL pattern containing :v placeholders to a concrete URL.
 // Returns the resolved URL string, or null if no resolver handles this pattern.
 //
 // Resolved URLs are versioned by construction (the :v value IS the version), so
 // callers should skip the isStable() check for them.
-function tryResolve(pattern, { mapsVersions, youtubePlayerId, recaptchaVersion }) {
+function tryResolve(pattern, { mapsVersions, youtubePlayerId }) {
   // Google Maps: :v1 = channel (e.g. "65"), :v2 = release (e.g. "3b")
   // Skip intl variants containing :v3 — those URLs return 404.
   if (MAPS_PATTERN.test(pattern) && mapsVersions && !pattern.includes(':v3')) {
@@ -158,18 +148,6 @@ function tryResolve(pattern, { mapsVersions, youtubePlayerId, recaptchaVersion }
           .replace(':v2', 'player_ias.vflset')
           .replace(':v3', 'en_US')
       : pattern.replace(':v', youtubePlayerId);
-    if (!HAS_PATTERN.test(url)) return url;
-  }
-
-  // reCAPTCHA: :v = release version hash
-  // Patterns that also contain wildcards (recaptcha__*.js) remain unresolvable here —
-  // the * is a locale suffix (e.g. recaptcha__en.js, recaptcha__fr.js) and Google
-  // does not publish the locale list. Only styles__ltr.css is a concrete resolvable
-  // file. Unlike YouTube and Maps, reCAPTCHA has no public version history log and
-  // no documented release cadence, so a dedicated historical scraper is not viable;
-  // resolving the current version here is the extent of what's discoverable.
-  if (RECAPTCHA_PATTERN.test(pattern) && recaptchaVersion) {
-    const url = pattern.replace(':v', recaptchaVersion);
     if (!HAS_PATTERN.test(url)) return url;
   }
 
@@ -193,10 +171,9 @@ async function getAllUrls() {
     rawPatterns.push(match[1].trim());
   }
 
-  const [mapsVersions, youtubePlayerId, recaptchaVersion] = await Promise.all([
+  const [mapsVersions, youtubePlayerId] = await Promise.all([
     getMapsVersions(),
     getYouTubePlayerId(),
-    getRecaptchaVersion(),
   ]);
 
   if (mapsVersions) {
@@ -209,13 +186,8 @@ async function getAllUrls() {
   } else {
     console.log(`[chromium] Could not resolve YouTube player ID; YouTube patterns will be skipped`);
   }
-  if (recaptchaVersion) {
-    console.log(`[chromium] reCAPTCHA version: ${recaptchaVersion}`);
-  } else {
-    console.log(`[chromium] Could not resolve reCAPTCHA version; reCAPTCHA patterns will be skipped`);
-  }
 
-  const versions = { mapsVersions, youtubePlayerId, recaptchaVersion };
+  const versions = { mapsVersions, youtubePlayerId };
   const urls = [];
   let resolvedCount = 0;
   let blockedCount = 0;
