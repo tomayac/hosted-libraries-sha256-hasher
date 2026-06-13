@@ -15,7 +15,7 @@ const CDNJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs';
 const TOP_N = 100;
 const NPM_BATCH = 100;
 const PACKAGES_BATCH = 50;
-const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|eot|svg|xml|gz|br)$/i;
+const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|svg|gz)$/i;
 
 async function getCdnjsNames() {
   const { data } = await axios.get(`${CDNJS_API}?fields=name&limit=1000`);

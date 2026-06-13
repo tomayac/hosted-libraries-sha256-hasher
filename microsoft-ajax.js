@@ -9,7 +9,7 @@ import { getSha256 } from './shared.js';
 const TARGET_URL = 'https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview';
 export const OUTPUT_CSV = 'data/microsoft-ajax-hashes.csv';
 
-const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|eot|svg|xml|gz|br)$/i;
+const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|svg|gz)$/i;
 
 export async function run() {
   console.log(`[microsoft] Fetching page data from ${TARGET_URL}...`);
@@ -23,9 +23,7 @@ export async function run() {
   ].map((m) => m[0].replace(/[.,;]+$/, ''));
   const urls = [...new Set(rawUrls)].filter((url) => HASHABLE.test(url));
 
-  console.log(
-    `[microsoft] ${urls.length} hashable URLs (.js/.css). Hashing...`
-  );
+  console.log(`[microsoft] ${urls.length} hashable URLs. Hashing...`);
 
   const records = [];
 

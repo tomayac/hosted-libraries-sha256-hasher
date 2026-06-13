@@ -5,7 +5,7 @@
 
 # Hosted Libraries SHA-256 Hasher
 
-Scrapes popular CDN catalogs, downloads every listed `.js`, `.css`, `.wasm`, web font, JSON, and other web-relevant file, and
+Scrapes popular CDN catalogs, downloads every listed `.js`, `.css`, `.wasm`, web font (`.woff2`, `.woff`, `.ttf`, `.otf`), `.json`, `.svg`, and pre-compressed (`.gz`) file, and
 computes its SHA-256 hash. The primary use case is providing a
 well-known-resources allowlist for the
 [Cross-Origin Storage](https://wicg.github.io/cross-origin-storage/) (COS) API.

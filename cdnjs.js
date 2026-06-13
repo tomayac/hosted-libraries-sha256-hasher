@@ -22,7 +22,7 @@ const MONTHS = [
   'November',
   'December',
 ];
-const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|eot|svg|xml|gz|br)$/i;
+const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|svg|gz)$/i;
 
 function getLast12Months() {
   const result = [];
