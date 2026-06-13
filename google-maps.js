@@ -38,14 +38,30 @@ const MAPS_FILES = [
 ];
 
 // Quarterly versions to probe. Google keeps the 4 most recent; we probe a
-// wider range so historical versions already deleted are simply omitted (404).
-// Maps API v3 started at 3.0; meaningful weekly-updated versions began ~3.22
-// (2016). We start at 3.50 (2021) as a practical lower bound — anything older
-// is long deleted. Update the upper bound each quarter as new versions release.
+// narrow window around the estimated current version so new versions are
+// picked up automatically without any code changes, and deleted ones are
+// silently skipped (their bootstrap redirects to the default channel, whose
+// URL doesn't match the CDN path pattern, so getVersionPair() returns null).
+//
+// Version numbering: 3.NN increments by 1 each quarter (mid-Feb/May/Aug/Nov).
+// Anchor: 3.64 = Q2 2026 (verified). We derive the estimated current version
+// from the date, then probe [current-5 .. current+6] — enough to cover
+// versions Google keeps (4) plus headroom for timing skew at quarter boundaries.
 function getCandidateVersions() {
+  const base = { version: 64, year: 2026, quarter: 2 };
+  const now = new Date();
+  const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+  const quartersElapsed =
+    (now.getFullYear() - base.year) * 4 + (currentQuarter - base.quarter);
+  const estimatedCurrent = base.version + quartersElapsed;
+
   const versions = [];
-  // 3.50 released ~Aug 2021; currently 3.64 is weekly, 3.65 due mid-May 2026.
-  for (let minor = 50; minor <= 70; minor++) {
+  // Start 5 back (covers any versions Google still serves) and go 6 ahead
+  // (ensures the newly released version is probed even before this comment
+  // is updated). Minimum floor of 3.50 — anything older is long deleted.
+  const lo = Math.max(50, estimatedCurrent - 5);
+  const hi = estimatedCurrent + 6;
+  for (let minor = lo; minor <= hi; minor++) {
     versions.push(`3.${minor}`);
   }
   return versions;
