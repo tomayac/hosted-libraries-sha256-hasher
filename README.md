@@ -35,6 +35,7 @@ real-world popularity, so only genuinely ubiquitous resources are included.
 | [cdnjs](https://cdnjs.com) via npm popularity                                                                                                                    | Ranks cdnjs-hosted packages by npm download count; hashes all `.js`, `.css`, `.wasm`, web font, JSON, and other web-relevant files for the top 100's latest version (see below)                                                                | [`data/npm-popular-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/npm-popular-hashes.csv)                         |
 | [Chromium pervasive resources](https://source.chromium.org/chromium/chromium/src/+/main:services/network/pervasive_resources/shared_resource_checker_patterns.h) | Extracts versioned, non-tracking `.js`, `.css`, `.wasm`, web font, JSON, and other web-relevant URLs from Chromium's pervasive resource allowlist; resolves Google Maps, YouTube Player, and reCAPTCHA version patterns dynamically; excludes ads/tracking domains and unversioned URLs via deterministic code | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/chromium-pervasive-hashes.csv)           |
 | [YouTube Player](https://www.youtube.com/iframe_api)                                                                                                             | Discovers the current player ID from the iframe API bootstrap and seeds from all historical IDs at [nadeko.net](https://youtube-player-ids.nadeko.net/); hashes all five per-version file types: `base.js`, `captions.js`, `www-player.css`, `www-widgetapi.js`, and the youtube-nocookie.com mirror of `www-player.css` (approach from [youtube-player-id-logger](https://codeberg.org/Fijxu/youtube-player-id-logger)) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/youtube-player-hashes.csv)                   |
+| [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript)                                                                        | Probes each quarterly version (3.50–3.70) via the versioned bootstrap URL (`?v=3.NN`), extracts the internal `(channel, release)` pair from the self-referencing CDN path, and hashes `main.js` and `map.js` on both the `maps.googleapis.com` and `maps.google.com` mirrors; deduplicates builds that share the same internal pair | [`data/google-maps-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-maps-hashes.csv)                         |
 
 A combined file with all CDN mirrors is written to
 [`data/combined-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/combined-hashes.csv).
@@ -84,6 +85,7 @@ npm start
 
 # Run a single CDN only
 npm run google
+npm run google-maps
 npm run microsoft
 npm run cdnjs
 npm run npm-popular

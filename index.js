@@ -5,6 +5,7 @@ import fs from 'fs';
 import { run as runChromium } from './chromium-pervasive.js';
 import { run as runCdnjs } from './cdnjs.js';
 import { run as runGoogle } from './google-hosted-libraries.js';
+import { run as runGoogleMaps } from './google-maps.js';
 import { run as runMicrosoft } from './microsoft-ajax.js';
 import { run as runNpmPopular } from './npm-popular.js';
 import { run as runYouTube } from './youtube-player.js';
@@ -19,6 +20,7 @@ async function main() {
     npmPopularRecords,
     chromiumRecords,
     youtubeRecords,
+    googleMapsRecords,
   ] = await Promise.all([
     runGoogle(),
     runMicrosoft(),
@@ -26,6 +28,7 @@ async function main() {
     runNpmPopular(),
     runChromium(),
     runYouTube(),
+    runGoogleMaps(),
   ]);
 
   // Deduplicate identical (sha256, url) pairs, keep all CDN mirrors of the same hash
@@ -38,6 +41,7 @@ async function main() {
     ...npmPopularRecords,
     ...chromiumRecords,
     ...youtubeRecords,
+    ...googleMapsRecords,
   ]) {
     const key = `${record.sha256}\t${record.url}`;
     if (!seen.has(key)) {
@@ -63,7 +67,8 @@ async function main() {
     cdnjsRecords.length +
     npmPopularRecords.length +
     chromiumRecords.length +
-    youtubeRecords.length;
+    youtubeRecords.length +
+    googleMapsRecords.length;
   const uniqueHashes = new Set(combined.map((r) => r.sha256)).size;
   console.log(
     `\nCombined: ${combined.length} rows (${uniqueHashes} unique hashes, from ${total} total) saved to '${OUTPUT_CSV}'.`

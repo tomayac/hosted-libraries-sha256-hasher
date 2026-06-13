@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "google": "node google-hosted-libraries.js",
+    "google-maps": "node google-maps.js",
     "microsoft": "node microsoft-ajax.js",
     "cdnjs": "node cdnjs.js",
     "npm-popular": "node npm-popular.js",
