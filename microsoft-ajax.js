@@ -9,7 +9,7 @@ import { getSha256 } from './shared.js';
 const TARGET_URL = 'https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview';
 export const OUTPUT_CSV = 'data/microsoft-ajax-hashes.csv';
 
-const HASHABLE = /\.(js|css)$/i;
+const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|eot|svg|xml|gz|br)$/i;
 
 export async function run() {
   console.log(`[microsoft] Fetching page data from ${TARGET_URL}...`);
