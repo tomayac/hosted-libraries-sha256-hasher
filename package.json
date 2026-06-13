@@ -10,6 +10,7 @@
     "microsoft": "node microsoft-ajax.js",
     "cdnjs": "node cdnjs.js",
     "jsdelivr": "node jsdelivr.js",
+    "npm-popular": "node npm-popular.js",
     "chromium": "node chromium-pervasive.js",
     "youtube": "node youtube-player.js"
   },

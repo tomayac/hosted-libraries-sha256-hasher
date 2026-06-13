@@ -8,6 +8,7 @@ import { run as runGoogle } from './google-hosted-libraries.js';
 import { run as runGoogleMaps } from './google-maps.js';
 import { run as runJsdelivr } from './jsdelivr.js';
 import { run as runMicrosoft } from './microsoft-ajax.js';
+import { run as runNpmPopular } from './npm-popular.js';
 import { run as runYouTube } from './youtube-player.js';
 
 const OUTPUT_CSV = 'data/combined-hashes.csv';
@@ -18,6 +19,7 @@ async function main() {
     microsoftRecords,
     cdnjsRecords,
     jsdelivrRecords,
+    npmPopularRecords,
     chromiumRecords,
     youtubeRecords,
     googleMapsRecords,
@@ -26,6 +28,7 @@ async function main() {
     runMicrosoft(),
     runCdnjs(),
     runJsdelivr(),
+    runNpmPopular(),
     runChromium(),
     runYouTube(),
     runGoogleMaps(),
@@ -39,6 +42,7 @@ async function main() {
     ...microsoftRecords,
     ...cdnjsRecords,
     ...jsdelivrRecords,
+    ...npmPopularRecords,
     ...chromiumRecords,
     ...youtubeRecords,
     ...googleMapsRecords,
@@ -66,6 +70,7 @@ async function main() {
     microsoftRecords.length +
     cdnjsRecords.length +
     jsdelivrRecords.length +
+    npmPopularRecords.length +
     chromiumRecords.length +
     youtubeRecords.length +
     googleMapsRecords.length;
