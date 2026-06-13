@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { getSha256 } from './shared.js';
 
 const STATS_REPO = 'cdnjs/cf-stats';
-const OUTPUT_CSV = 'data/cdnjs-hashes.csv';
+export const OUTPUT_CSV = 'data/cdnjs-hashes.csv';
 const MONTHS = [
   'January',
   'February',
