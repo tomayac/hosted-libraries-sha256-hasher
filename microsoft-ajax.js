@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { getSha256 } from './shared.js';
 
 const TARGET_URL = 'https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview';
-export const OUTPUT_CSV = 'microsoft-ajax-hashes.csv';
+export const OUTPUT_CSV = 'data/microsoft-ajax-hashes.csv';
 
 const HASHABLE = /\.(js|css)$/i;
 
@@ -18,15 +18,16 @@ export async function run() {
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
   });
 
-  const rawUrls = [...data.matchAll(/https:\/\/ajax\.aspnetcdn\.com\/[^\s"'<>)]+/g)]
-    .map(m => m[0].replace(/[.,;]+$/, ''));
-  const urls = [...new Set(rawUrls)].filter(url => HASHABLE.test(url));
+  const rawUrls = [
+    ...data.matchAll(/https:\/\/ajax\.aspnetcdn\.com\/[^\s"'<>)]+/g),
+  ].map((m) => m[0].replace(/[.,;]+$/, ''));
+  const urls = [...new Set(rawUrls)].filter((url) => HASHABLE.test(url));
 
-  console.log(`[microsoft] ${urls.length} hashable URLs (.js/.css). Hashing...`);
+  console.log(
+    `[microsoft] ${urls.length} hashable URLs (.js/.css). Hashing...`
+  );
 
   const records = [];
-  const writeStream = fs.createWriteStream(OUTPUT_CSV, { encoding: 'utf8' });
-  writeStream.write('url,sha256\n');
 
   for (let i = 0; i < urls.length; i++) {
     const url = urls[i];
@@ -34,17 +35,28 @@ export async function run() {
     if (sha256) {
       records.push({ url, sha256 });
       console.log(`[microsoft] [${i + 1}/${urls.length}] VALID: ${url}`);
-      writeStream.write(`${url},${sha256}\n`);
     } else {
       console.log(`[microsoft] [${i + 1}/${urls.length}] OMITTED: ${url}`);
     }
   }
 
+  records.sort((a, b) => a.sha256.localeCompare(b.sha256));
+  fs.mkdirSync('data', { recursive: true });
+  const writeStream = fs.createWriteStream(OUTPUT_CSV, { encoding: 'utf8' });
+  writeStream.write('sha256,url\n');
+  for (const { url, sha256 } of records) {
+    writeStream.write(`${sha256},${url}\n`);
+  }
   writeStream.end();
-  console.log(`[microsoft] Saved ${records.length} records to '${OUTPUT_CSV}'.`);
+  console.log(
+    `[microsoft] Saved ${records.length} records to '${OUTPUT_CSV}'.`
+  );
   return records;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  run().catch(err => { console.error(err.message); process.exit(1); });
+  run().catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
 }

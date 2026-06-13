@@ -8,7 +8,9 @@
     "google": "node google-hosted-libraries.js",
     "microsoft": "node microsoft-ajax.js",
     "cdnjs": "node cdnjs.js",
-    "npm-popular": "node npm-popular.js"
+    "npm-popular": "node npm-popular.js",
+    "chromium": "node chromium-pervasive.js",
+    "youtube": "node youtube-player.js"
   },
   "keywords": [],
   "author": "Thomas Steiner <tomac@google.com>",

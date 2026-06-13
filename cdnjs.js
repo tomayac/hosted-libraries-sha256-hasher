@@ -7,10 +7,20 @@ import { fileURLToPath } from 'url';
 import { getSha256 } from './shared.js';
 
 const STATS_REPO = 'cdnjs/cf-stats';
-const OUTPUT_CSV = 'cdnjs-hashes.csv';
+const OUTPUT_CSV = 'data/cdnjs-hashes.csv';
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 const HASHABLE = /\.(js|css)$/i;
 
@@ -35,9 +45,13 @@ async function fetchMonthMarkdown(year, month) {
 }
 
 function extractUrls(markdown) {
-  return [...markdown.matchAll(/https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/[^\s"'<>)\]]+/g)]
-    .map(m => m[0].replace(/[.,;]+$/, ''))
-    .filter(url => HASHABLE.test(url));
+  return [
+    ...markdown.matchAll(
+      /https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/[^\s"'<>)\]]+/g
+    ),
+  ]
+    .map((m) => m[0].replace(/[.,;]+$/, ''))
+    .filter((url) => HASHABLE.test(url));
 }
 
 export async function run() {
@@ -52,16 +66,16 @@ export async function run() {
       continue;
     }
     const urls = extractUrls(markdown);
-    urls.forEach(url => allUrls.add(url));
-    console.log(`[cdnjs] ${month} ${year}: ${urls.length} URLs → ${allUrls.size} unique so far`);
+    urls.forEach((url) => allUrls.add(url));
+    console.log(
+      `[cdnjs] ${month} ${year}: ${urls.length} URLs → ${allUrls.size} unique so far`
+    );
   }
 
   const urls = [...allUrls];
   console.log(`[cdnjs] ${urls.length} unique URLs to hash...`);
 
   const records = [];
-  const writeStream = fs.createWriteStream(OUTPUT_CSV, { encoding: 'utf8' });
-  writeStream.write('url,sha256\n');
 
   for (let i = 0; i < urls.length; i++) {
     const url = urls[i];
@@ -69,17 +83,26 @@ export async function run() {
     if (sha256) {
       records.push({ url, sha256 });
       console.log(`[cdnjs] [${i + 1}/${urls.length}] VALID: ${url}`);
-      writeStream.write(`${url},${sha256}\n`);
     } else {
       console.log(`[cdnjs] [${i + 1}/${urls.length}] OMITTED: ${url}`);
     }
   }
 
+  records.sort((a, b) => a.sha256.localeCompare(b.sha256));
+  fs.mkdirSync('data', { recursive: true });
+  const writeStream = fs.createWriteStream(OUTPUT_CSV, { encoding: 'utf8' });
+  writeStream.write('sha256,url\n');
+  for (const { url, sha256 } of records) {
+    writeStream.write(`${sha256},${url}\n`);
+  }
   writeStream.end();
   console.log(`[cdnjs] Saved ${records.length} records to '${OUTPUT_CSV}'.`);
   return records;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  run().catch(err => { console.error(err.message); process.exit(1); });
+  run().catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
 }
