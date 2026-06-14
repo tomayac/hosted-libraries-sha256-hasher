@@ -27,10 +27,8 @@ const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|svg|gz)$/i;
 // Fetches the top packages by CDN hits. Returns only npm-type entries
 // (GitHub repos don't follow the stable semver CDN URL pattern we need).
 async function getTopPackages() {
-  // The API returns npm and gh packages mixed; fetch enough to get TOP_N npm
-  // entries after filtering. 250 gives comfortable headroom.
   const { data } = await axios.get(`${JSDELIVR_API}/stats/packages`, {
-    params: { by: 'hits', type: 'npm', period: 'month', limit: TOP_N * 2 },
+    params: { by: 'hits', type: 'npm', period: 'month', limit: TOP_N },
     headers: { 'User-Agent': UA },
   });
 
