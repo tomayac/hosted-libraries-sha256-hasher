@@ -1,7 +1,7 @@
 {
   "name": "hosted-libraries-sha256-hasher",
-  "version": "2.0.0",
-  "description": "Computes SHA-256 hashes for files hosted on popular CDNs (Google Hosted Libraries, Microsoft Ajax CDN, cdnjs).",
+  "version": "3.0.0",
+  "description": "Generates the Public Hash List (PHL): a PSL-style flat file of SHA-256 hashes for ubiquitous CDN-hosted resources, used as the availability-gating allowlist for Cross-Origin Storage (COS).",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -12,7 +12,8 @@
     "jsdelivr": "node jsdelivr.js",
     "npm-popular": "node npm-popular.js",
     "chromium": "node chromium-pervasive.js",
-    "youtube": "node youtube-player.js"
+    "youtube": "node youtube-player.js",
+    "huggingface": "node huggingface.js"
   },
   "keywords": [],
   "author": "Thomas Steiner <tomac@google.com>",
