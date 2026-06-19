@@ -7,8 +7,15 @@
 
 Scrapes popular CDN catalogs and npm popularity rankings, downloads web-relevant
 files (`.js`, `.css`, `.wasm`, web fonts, `.json`, `.svg`, pre-compressed `.gz`),
-and computes each file's SHA-256 hash. The output is a well-known-resources
-allowlist for the [Cross-Origin Storage (COS) API](https://wicg.github.io/cross-origin-storage/).
+and computes each file's SHA-256 hash. The output is the **Public Hash List
+(PHL)** — a [Public Suffix List](https://github.com/publicsuffix/list)-style flat
+file that serves as the availability-gating allowlist for the
+[Cross-Origin Storage (COS) API](https://wicg.github.io/cross-origin-storage/).
+
+The hash algorithm is currently **SHA-256** (matching COS's requirement that a
+hash value be a 64-character lowercase hex string), but the format carries the
+algorithm explicitly so it can migrate later without a redesign — see
+[Output format](#output-format).
 
 ## Why this matters for Cross-Origin Storage
 
@@ -52,21 +59,89 @@ COS sharing regardless of how they are currently loaded.
 | [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h) | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-rotating URL in it; resolves the current version of Google Maps and YouTube Player from their respective bootstrap endpoints; certain hosts are excluded from pattern resolution (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/chromium-pervasive-hashes.csv) |
 | [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_ | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/youtube-player-hashes.csv) |
 | [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_ | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes the same 16 JS files per version that Chromium tracks (see below) | [`data/google-maps-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-maps-hashes.csv) |
+| [Hugging Face Hub](https://huggingface.co) _(hand-curated, optional)_ | Lists the most-downloaded models and hashes their large weight/asset files (`.safetensors`, `.gguf`, `.onnx`, `.tflite`, `.task`, …); see [Model-hub source](#model-hub-source-hugging-face) | [`data/huggingface-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/huggingface-hashes.csv) |
 
-A combined file with all sources is written to
-[`data/combined-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/combined-hashes.csv).
-Rows are sorted by SHA-256 hash so all mirrors of the same file appear together;
-exact `(sha256, url)` duplicates are removed.
+The first eight sources are **objective**: a resource qualifies through a
+real-world popularity signal (CDN request volume, npm downloads, cross-CDN
+byte-identity, or browser-vendor vetting). The Hugging Face source is different —
+**hand-curated** and **optional** — and lands in its own section of the output;
+see [Model-hub source](#model-hub-source-hugging-face). This source set is not
+fixed: jsDelivr, unpkg, and web-font providers are obvious future additions, and
+adding one is a governance action, not a format change.
 
-Each row contains the lowercase hex SHA-256 digest followed by the full CDN URL:
+## Output format
+
+The canonical output is the Public Hash List at
+[`data/combined-hashes.dat`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/combined-hashes.dat),
+a flat text file modeled on the Public Suffix List. The design rationale: a user
+agent needs exactly one thing at runtime — _given a hash, is it on the list?_ —
+so the machine-readable payload is just bare lowercase SHA-256 digests, one per
+line. Everything else (which source vouched for an entry, a representative URL)
+is provenance for humans and auditors, carried in `//` comment lines that parsers
+ignore. This is the same split the PSL uses, it diffs cleanly line-by-line, and
+it deliberately drops the `sources`, `mirror_count`, and `first_seen` columns an
+earlier CSV used: the first two are build-time inputs, and `first_seen` is
+effectively unknowable from a snapshot scrape.
 
 ```
-sha256,url
-f2094bbf6141b359722c4fe454eb6c4b0f0e42cc10cc7af921fc158fceb86539,https://ajax.googleapis.com/ajax/libs/d3js/7.9.0/d3.min.js
-f2094bbf6141b359722c4fe454eb6c4b0f0e42cc10cc7af921fc158fceb86539,https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js
+// Public Hash List (PHL)
+// ...
+// VERSION: 2026-06-19T13:20:00Z
+// COMMIT: a8a680c
+// Algorithm: SHA-256 (lowercase hex, 64 chars)
+//
+// ===BEGIN SHA-256===
+// Popularity-corroborated resources. User agents MUST treat these as eligible.
+//
+// cdnjs (Cloudflare request rank), Chromium pervasive, Google Hosted Libraries, Microsoft Ajax CDN — e.g. https://code.jquery.com/jquery-3.4.1.min.js
+0925e8ad7bd971391a8b1e98be8e87a6971919eb5b60c196485941c3c1df089a
+// ===END SHA-256===
+//
+// ===BEGIN SHA-256 HUGGING-FACE===
+// Hand-curated AI model resources. User agents SHOULD include this section; a UA MAY omit it.
+// ===END SHA-256 HUGGING-FACE===
 ```
 
-The per-source files follow the same format and are also sorted by hash.
+Entries are sorted by hash, so all mirrors of one file collapse to a single
+entry whose comment lists every source that vouched for it (the jQuery example
+above is byte-identical across four independent catalogs). Keying by **content
+hash rather than URL** is deliberate and is why those four mirrors are one row,
+not four.
+
+**Algorithm agility.** The algorithm is declared by the section delimiter
+(`===BEGIN SHA-256===`) rather than per line, so a future migration is additive:
+a parallel `===BEGIN SHA-384===` section can coexist during a transition and one
+file serves both old and new user agents.
+
+The per-source `*-hashes.csv` files are intermediate inputs to the combined list;
+they remain CSV (`sha256,url`, sorted by hash) and are regenerated by running
+each source.
+
+### Model-hub source (Hugging Face)
+
+The objective sources all rest on a measurable popularity signal. AI model
+weights — COS's headline use case — do not fit that mold: a specific model build
+may be hugely valuable to deduplicate yet appear on only a handful of sites, so
+it would never clear a popularity threshold. The model-hub source therefore
+qualifies entries on a different basis — _published on a recognized public model
+hub_ — and places them in a separate, optional `===BEGIN SHA-256 HUGGING-FACE===`
+section. The disclosure such an entry permits is coarse interest inference
+("this user runs in-browser AI models"), not identification of a specific site,
+because the artifacts are public hub downloads rather than site-unique secrets.
+
+Because it departs from the objective bar, this section is **optional but
+strongly encouraged**: user agents **SHOULD** include it and **MAY** omit it.
+The catch is that the AI use case only pays off under uniform adoption — a user
+agent that includes the section lets multi-gigabyte weights be downloaded once
+and shared across origins, while one that omits it forces those downloads to
+repeat per origin. Uneven adoption therefore hands a real performance advantage
+to the including user agents, which runs against the PHL's whole purpose as a
+neutral cross-vendor resource; full adoption is **RECOMMENDED**.
+
+The hub is currently the Hugging Face Hub because it is today's de facto central
+hub for openly published models. The design is hub-agnostic: the inclusion basis
+is "a recognized public model hub," and additional hubs can be wired up the same
+way if the ecosystem's center of gravity shifts.
 
 ## Source details
 
@@ -139,7 +214,7 @@ player version (`base.js`, `captions.js`, `www-player.css`,
 `youtube-player.js` fetches all historical player IDs from
 [nadeko.net](https://youtube-player-ids.nadeko.net/) and hashes the same five
 files for each. The current version's URLs appear in both outputs and are
-deduplicated in `combined-hashes.csv`.
+deduplicated in `combined-hashes.dat`.
 
 **Google Maps JavaScript API** (`google-maps.js`): Chromium tracks 16 URL
 patterns per Maps version — 14 files on `maps.googleapis.com` (`common.js`,
@@ -176,7 +251,7 @@ how short-lived each token is.
 ```bash
 npm install
 
-# Run all sources and produce the combined CSV
+# Run all sources and produce the Public Hash List (data/combined-hashes.dat)
 npm start
 
 # Run a single source only
@@ -188,6 +263,7 @@ npm run jsdelivr
 npm run npm-popular
 npm run chromium
 npm run youtube
+npm run huggingface   # optional model-hub section
 ```
 
 Any URL that returns a non-200 status or times out after 6 seconds is silently
@@ -196,4 +272,22 @@ omitted. For the Google Hosted Libraries CDN, known historical filename changes
 
 ## License
 
-[Apache 2.0](LICENSE)
+The **tooling** in this repository (the scrapers and `index.js`) is licensed
+under [Apache 2.0](LICENSE).
+
+The **generated data file** is intended to be freely usable by every browser
+vendor, including those shipping closed-source binaries. The _proposed_ data
+license is **MPL-2.0**, the same license the
+[Public Suffix List](https://github.com/publicsuffix/list) uses — weak,
+file-based copyleft that explicitly permits embedding into proprietary codebases,
+which minimizes legal review for any vendor that has already cleared the PSL.
+This is a proposal pending sign-off and is **not** reflected in the repository's
+`LICENSE` file yet.
+
+A note on what is being licensed: the individual entries are _facts_ (a file has
+a given hash), which attract no copyright in the US, though a curated compilation
+can attract a thin compilation copyright and, in the EU, a separate _sui generis_
+database right. An explicit license places both beyond doubt. The list contains
+**hashes and (in comments) example URLs only — never the resource bytes**, so it
+redistributes no library, font, or model, and inherits none of those resources'
+own licenses.
