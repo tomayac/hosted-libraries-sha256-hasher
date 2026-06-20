@@ -43,6 +43,9 @@ function commitId() {
 }
 
 async function main() {
+  fs.rmSync('data', { recursive: true, force: true });
+  fs.mkdirSync('data', { recursive: true });
+
   const coreTagged = (await Promise.all(CORE_SOURCES.map(collect))).flat();
   const hfTagged = await collect(HUGGING_FACE_SOURCE);
 
@@ -51,8 +54,6 @@ async function main() {
 
   const version = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
   const commit = commitId();
-
-  fs.mkdirSync('data', { recursive: true });
 
   // Canonical PHL flat file (the sole combined output).
   fs.writeFileSync(OUTPUT_DAT, formatHashList({ core, huggingface, version, commit }), 'utf8');
