@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import fs from 'fs';
+import { execSync } from 'child_process';
+import { groupRecords, formatHashList } from './shared.js';
 import { run as runChromium } from './chromium-pervasive.js';
 import { run as runCdnjs } from './cdnjs.js';
 import { run as runGoogle } from './google-hosted-libraries.js';
@@ -10,73 +12,54 @@ import { run as runJsdelivr } from './jsdelivr.js';
 import { run as runMicrosoft } from './microsoft-ajax.js';
 import { run as runNpmPopular } from './npm-popular.js';
 import { run as runYouTube } from './youtube-player.js';
+import { run as runHuggingFace } from './huggingface.js';
 
-const OUTPUT_CSV = 'data/combined-hashes.csv';
+const OUTPUT_DAT = 'data/combined-hashes.dat'; // canonical PHL output
+
+// Core (objective, popularity-based) sources and the optional model-hub source.
+const CORE_SOURCES = [
+  ['google-hosted-libraries', runGoogle],
+  ['microsoft-ajax', runMicrosoft],
+  ['cdnjs', runCdnjs],
+  ['jsdelivr', runJsdelivr],
+  ['npm-popular', runNpmPopular],
+  ['chromium-pervasive', runChromium],
+  ['youtube-player', runYouTube],
+  ['google-maps', runGoogleMaps],
+];
+const HUGGING_FACE_SOURCE = ['huggingface', runHuggingFace];
+
+async function collect([source, run]) {
+  const records = await run();
+  return records.map((r) => ({ ...r, source }));
+}
+
+function commitId() {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'uncommitted';
+  }
+}
 
 async function main() {
-  const [
-    googleRecords,
-    microsoftRecords,
-    cdnjsRecords,
-    jsdelivrRecords,
-    npmPopularRecords,
-    chromiumRecords,
-    youtubeRecords,
-    googleMapsRecords,
-  ] = await Promise.all([
-    runGoogle(),
-    runMicrosoft(),
-    runCdnjs(),
-    runJsdelivr(),
-    runNpmPopular(),
-    runChromium(),
-    runYouTube(),
-    runGoogleMaps(),
-  ]);
+  const coreTagged = (await Promise.all(CORE_SOURCES.map(collect))).flat();
+  const hfTagged = await collect(HUGGING_FACE_SOURCE);
 
-  // Deduplicate identical (sha256, url) pairs, keep all CDN mirrors of the same hash
-  const seen = new Set();
-  const combined = [];
-  for (const record of [
-    ...googleRecords,
-    ...microsoftRecords,
-    ...cdnjsRecords,
-    ...jsdelivrRecords,
-    ...npmPopularRecords,
-    ...chromiumRecords,
-    ...youtubeRecords,
-    ...googleMapsRecords,
-  ]) {
-    const key = `${record.sha256}\t${record.url}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      combined.push(record);
-    }
-  }
+  const core = groupRecords(coreTagged);
+  const huggingface = groupRecords(hfTagged);
 
-  combined.sort((a, b) => a.sha256.localeCompare(b.sha256));
+  const version = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  const commit = commitId();
 
   fs.mkdirSync('data', { recursive: true });
-  const writeStream = fs.createWriteStream(OUTPUT_CSV, { encoding: 'utf8' });
-  writeStream.write('sha256,url\n');
-  for (const { url, sha256 } of combined) {
-    const escaped = url.includes(',') ? `"${url}"` : url;
-    writeStream.write(`${sha256},${escaped}\n`);
-  }
-  writeStream.end();
 
-  const total =
-    googleRecords.length +
-    microsoftRecords.length +
-    cdnjsRecords.length +
-    jsdelivrRecords.length +
-    npmPopularRecords.length +
-    chromiumRecords.length +
-    youtubeRecords.length +
-    googleMapsRecords.length;
-  const uniqueHashes = new Set(combined.map((r) => r.sha256)).size;
+  // Canonical PHL flat file (the sole combined output).
+  fs.writeFileSync(OUTPUT_DAT, formatHashList({ core, huggingface, version, commit }), 'utf8');
+
   console.log(
-    `\nCombined: ${combined.length} rows (${uniqueHashes} unique hashes, from ${total} total) saved to '${OUTPUT_CSV}'.`
+    `\nPHL written to '${OUTPUT_DAT}': ${core.length} core entries, ` +
+      `${huggingface.length} model-hub entries.`
   );
 }
 
