@@ -14,7 +14,7 @@ import { run as runNpmPopular } from './npm-popular.js';
 import { run as runYouTube } from './youtube-player.js';
 import { run as runHuggingFace } from './huggingface.js';
 
-const OUTPUT_DAT = 'data/combined-hashes.dat'; // canonical PHL output
+const OUTPUT_DAT = 'data/public-hash-list.dat'; // canonical PHL output
 
 // Core (objective, popularity-based) sources and the optional model-hub source.
 const CORE_SOURCES = [

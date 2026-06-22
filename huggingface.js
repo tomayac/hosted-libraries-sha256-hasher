@@ -16,7 +16,7 @@ import { getSha256 } from './shared.js';
 // and additional hubs can be wired up the same way if the ecosystem shifts.
 //
 // User agents SHOULD include this section but MAY omit it (see README / design
-// doc). It is emitted as a separate section in combined-hashes.dat.
+// doc). It is emitted as a separate section in public-hash-list.dat.
 //
 // API: https://huggingface.co/api
 //   /models?sort=downloads&limit=N        — most-downloaded models
@@ -29,7 +29,7 @@ const HF_HOST = 'https://huggingface.co';
 const TOP_N = 100;
 const REVISION = 'main';
 const UA =
-  'hosted-libraries-sha256-hasher (https://github.com/tomayac/hosted-libraries-sha256-hasher)';
+  'public-hash-list (https://github.com/tomayac/public-hash-list)';
 // Large, byte-identical weight/asset formats worth deduplicating via COS.
 const HASHABLE = /\.(safetensors|bin|gguf|onnx|tflite|task|pt|npz|model)$/i;
 

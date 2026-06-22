@@ -1,5 +1,5 @@
 {
-  "name": "hosted-libraries-sha256-hasher",
+  "name": "public-hash-list",
   "version": "3.0.0",
   "description": "Generates the Public Hash List (PHL): a PSL-style flat file of SHA-256 hashes for ubiquitous CDN-hosted resources, used as the availability-gating allowlist for Cross-Origin Storage (COS).",
   "main": "index.js",

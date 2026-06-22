@@ -22,7 +22,7 @@ const UA =
 // All file types associated with each player version in the Chromium pervasive list.
 // The five URLs below correspond to the five :v / :v1/:v2/:v3 patterns in
 // shared_resource_checker_patterns.h. Hashing all of them per player ID ensures
-// complete coverage and allows combined-hashes.csv to deduplicate against
+// complete coverage and allows public-hash-list.dat to deduplicate against
 // chromium-pervasive-hashes.csv (which only carries the current player version).
 const PLAYER_FILES = [
   (id) => `https://www.youtube.com/s/player/${id}/player_ias.vflset/en_US/base.js`,

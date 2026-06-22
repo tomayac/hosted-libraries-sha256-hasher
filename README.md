@@ -3,7 +3,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 
-# Hosted Libraries SHA-256 Hasher
+# Public Hash List
 
 Scrapes popular CDN catalogs and npm popularity rankings, downloads web-relevant
 files (`.js`, `.css`, `.wasm`, web fonts, `.json`, `.svg`, pre-compressed `.gz`),
@@ -51,15 +51,15 @@ COS sharing regardless of how they are currently loaded.
 
 | Source | Method | Output |
 | --- | --- | --- |
-| [Google Hosted Libraries](https://developers.google.com/speed/libraries) | Scrapes the catalog page, reconstructs CDN URLs | [`data/google-hosted-libraries-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-hosted-libraries-hashes.csv) |
-| [Microsoft Ajax CDN](https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview) | Extracts URLs listed directly on the docs page | [`data/microsoft-ajax-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/microsoft-ajax-hashes.csv) |
-| [cdnjs](https://cdnjs.com) | Parses the top-100 most-requested resources from the last 12 months of [Cloudflare usage stats](https://github.com/cdnjs/cf-stats) | [`data/cdnjs-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/cdnjs-hashes.csv) |
-| [jsDelivr](https://www.jsdelivr.com) | Fetches the top 100 npm packages by actual jsDelivr CDN hit count (last month); resolves each to its latest stable version; hashes the canonical JS and CSS entry points identified by jsDelivr's entrypoints API | [`data/jsdelivr-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/jsdelivr-hashes.csv) |
-| [npm popularity](https://www.npmjs.com) | Ranks cdnjs-hosted packages by npm download count; hashes all web-relevant files for the top 100's latest version on cdnjs (see below) | [`data/npm-popular-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/npm-popular-hashes.csv) |
-| [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h) | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-rotating URL in it; resolves the current version of Google Maps and YouTube Player from their respective bootstrap endpoints; certain hosts are excluded from pattern resolution (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/chromium-pervasive-hashes.csv) |
-| [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_ | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/youtube-player-hashes.csv) |
-| [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_ | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes the same 16 JS files per version that Chromium tracks (see below) | [`data/google-maps-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/google-maps-hashes.csv) |
-| [Hugging Face Hub](https://huggingface.co) _(hand-curated, optional)_ | Lists the most-downloaded models and hashes their large weight/asset files (`.safetensors`, `.gguf`, `.onnx`, `.tflite`, `.task`, …); see [Model-hub source](#model-hub-source-hugging-face) | [`data/huggingface-hashes.csv`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/huggingface-hashes.csv) |
+| [Google Hosted Libraries](https://developers.google.com/speed/libraries) | Scrapes the catalog page, reconstructs CDN URLs | [`data/google-hosted-libraries-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-hosted-libraries-hashes.csv) |
+| [Microsoft Ajax CDN](https://learn.microsoft.com/en-us/aspnet/ajax/cdn/overview) | Extracts URLs listed directly on the docs page | [`data/microsoft-ajax-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/microsoft-ajax-hashes.csv) |
+| [cdnjs](https://cdnjs.com) | Parses the top-100 most-requested resources from the last 12 months of [Cloudflare usage stats](https://github.com/cdnjs/cf-stats) | [`data/cdnjs-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/cdnjs-hashes.csv) |
+| [jsDelivr](https://www.jsdelivr.com) | Fetches the top 100 npm packages by actual jsDelivr CDN hit count (last month); resolves each to its latest stable version; hashes the canonical JS and CSS entry points identified by jsDelivr's entrypoints API | [`data/jsdelivr-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/jsdelivr-hashes.csv) |
+| [npm popularity](https://www.npmjs.com) | Ranks cdnjs-hosted packages by npm download count; hashes all web-relevant files for the top 100's latest version on cdnjs (see below) | [`data/npm-popular-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/npm-popular-hashes.csv) |
+| [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h) | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-rotating URL in it; resolves the current version of Google Maps and YouTube Player from their respective bootstrap endpoints; certain hosts are excluded from pattern resolution (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/chromium-pervasive-hashes.csv) |
+| [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_ | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/youtube-player-hashes.csv) |
+| [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_ | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes the same 16 JS files per version that Chromium tracks (see below) | [`data/google-maps-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-maps-hashes.csv) |
+| [Hugging Face Hub](https://huggingface.co) _(hand-curated, optional)_ | Lists the most-downloaded models and hashes their large weight/asset files (`.safetensors`, `.gguf`, `.onnx`, `.tflite`, `.task`, …); see [Model-hub source](#model-hub-source-hugging-face) | [`data/huggingface-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/huggingface-hashes.csv) |
 
 The first eight sources are **objective**: a resource qualifies through a
 real-world popularity signal (CDN request volume, npm downloads, cross-CDN
@@ -72,7 +72,7 @@ adding one is a governance action, not a format change.
 ## Output format
 
 The canonical output is the Public Hash List at
-[`data/combined-hashes.dat`](https://github.com/tomayac/hosted-libraries-sha256-hasher/blob/main/data/combined-hashes.dat),
+[`data/public-hash-list.dat`](https://github.com/tomayac/public-hash-list/blob/main/data/public-hash-list.dat),
 a flat text file modeled on the Public Suffix List. The design rationale: a user
 agent needs exactly one thing at runtime — _given a hash, is it on the list?_ —
 so the machine-readable payload is just bare lowercase SHA-256 digests, one per
@@ -214,7 +214,7 @@ player version (`base.js`, `captions.js`, `www-player.css`,
 `youtube-player.js` fetches all historical player IDs from
 [nadeko.net](https://youtube-player-ids.nadeko.net/) and hashes the same five
 files for each. The current version's URLs appear in both outputs and are
-deduplicated in `combined-hashes.dat`.
+deduplicated in `public-hash-list.dat`.
 
 **Google Maps JavaScript API** (`google-maps.js`): Chromium tracks 16 URL
 patterns per Maps version — 14 files on `maps.googleapis.com` (`common.js`,
@@ -251,7 +251,7 @@ how short-lived each token is.
 ```bash
 npm install
 
-# Run all sources and produce the Public Hash List (data/combined-hashes.dat)
+# Run all sources and produce the Public Hash List (data/public-hash-list.dat)
 npm start
 
 # Run a single source only

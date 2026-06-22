@@ -21,7 +21,7 @@ const JSDELIVR_API = 'https://data.jsdelivr.com/v1';
 const JSDELIVR_CDN = 'https://cdn.jsdelivr.net/npm';
 const TOP_N = 100;
 const UA =
-  'hosted-libraries-sha256-hasher (https://github.com/tomayac/hosted-libraries-sha256-hasher)';
+  'public-hash-list (https://github.com/tomayac/public-hash-list)';
 const HASHABLE = /\.(js|mjs|cjs|css|wasm|json|woff|woff2|ttf|otf|svg|gz)$/i;
 
 // Fetches the top packages by CDN hits. Returns only npm-type entries
