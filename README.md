@@ -273,6 +273,24 @@ rotates to stay ahead of adversaries; COS caching would directly undermine that.
 The `styles__ltr.css` file is technically hashable but not worth including given
 how short-lived each token is.
 
+## Environment variables
+
+Some sources require API keys. Keys are loaded automatically from a `.env`
+file in the repository root using Node.js's built-in
+[`process.loadEnvFile()`](https://nodejs.org/api/process.html#processloadenvfilepath)
+(Node.js 20.12+, no package required).
+
+```bash
+cp .env.example .env   # then fill in your keys
+```
+
+| Variable | Required by | How to obtain |
+| --- | --- | --- |
+| `GOOGLE_FONTS_API_KEY` | `npm run google-fonts` | [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials; enable the **Web Fonts Developer API** (free quota is sufficient) |
+
+Sources without an API key in `.env` are skipped gracefully with a log
+message; they do not abort the full pipeline.
+
 ## Usage
 
 ```bash
@@ -291,7 +309,7 @@ npm run jsdelivr
 npm run npm-popular
 npm run chromium
 npm run youtube
-npm run google-fonts  # requires GOOGLE_FONTS_API_KEY env var
+npm run google-fonts  # requires GOOGLE_FONTS_API_KEY in .env
 npm run huggingface   # optional model-hub section
 ```
 
