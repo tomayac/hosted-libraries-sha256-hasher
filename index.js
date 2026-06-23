@@ -1,7 +1,8 @@
 // Copyright 2026 Google LLC
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MPL-2.0
 
 import fs from 'fs';
+import crypto from 'crypto';
 import { execSync } from 'child_process';
 import { groupRecords, formatHashList } from './shared.js';
 import { run as runChromium } from './chromium-pervasive.js';
@@ -15,6 +16,7 @@ import { run as runYouTube } from './youtube-player.js';
 import { run as runHuggingFace } from './huggingface.js';
 
 const OUTPUT_DAT = 'data/public-hash-list.dat'; // canonical PHL output
+const OUTPUT_SHA256 = 'data/public-hash-list.dat.sha256'; // integrity file for the above
 
 // Core (objective, popularity-based) sources and the optional model-hub source.
 const CORE_SOURCES = [
@@ -56,12 +58,18 @@ async function main() {
   const commit = commitId();
 
   // Canonical PHL flat file (the sole combined output).
-  fs.writeFileSync(OUTPUT_DAT, formatHashList({ core, huggingface, version, commit }), 'utf8');
+  const datContent = formatHashList({ core, huggingface, version, commit });
+  fs.writeFileSync(OUTPUT_DAT, datContent, 'utf8');
+
+  // Integrity file: SHA-256 of the canonical .dat, in standard shasum format.
+  const datHash = crypto.createHash('sha256').update(datContent, 'utf8').digest('hex');
+  fs.writeFileSync(OUTPUT_SHA256, `${datHash}  public-hash-list.dat\n`, 'utf8');
 
   console.log(
     `\nPHL written to '${OUTPUT_DAT}': ${core.length} core entries, ` +
       `${huggingface.length} model-hub entries.`
   );
+  console.log(`SHA-256 integrity file written to '${OUTPUT_SHA256}'.`);
 }
 
 main().catch((err) => {

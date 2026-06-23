@@ -1,6 +1,6 @@
 <!--
   Copyright 2026 Google LLC
-  SPDX-License-Identifier: Apache-2.0
+  SPDX-License-Identifier: MPL-2.0
 -->
 
 # Public Hash List
@@ -251,7 +251,8 @@ how short-lived each token is.
 ```bash
 npm install
 
-# Run all sources and produce the Public Hash List (data/public-hash-list.dat)
+# Run all sources and produce the Public Hash List and its SHA-256 integrity file
+# Outputs: data/public-hash-list.dat  data/public-hash-list.dat.sha256
 npm start
 
 # Run a single source only
@@ -272,17 +273,13 @@ omitted. For the Google Hosted Libraries CDN, known historical filename changes
 
 ## License
 
-The **tooling** in this repository (the scrapers and `index.js`) is licensed
-under [Apache 2.0](LICENSE).
-
-The **generated data file** is intended to be freely usable by every browser
-vendor, including those shipping closed-source binaries. The _proposed_ data
-license is **MPL-2.0**, the same license the
-[Public Suffix List](https://github.com/publicsuffix/list) uses — weak,
-file-based copyleft that explicitly permits embedding into proprietary codebases,
-which minimizes legal review for any vendor that has already cleared the PSL.
-This is a proposal pending sign-off and is **not** reflected in the repository's
-`LICENSE` file yet.
+This repository — both the **tooling** (scrapers, `index.js`) and the
+**generated data file** (`data/public-hash-list.dat`) — is licensed under
+**[MPL-2.0](LICENSE)**, the same license the
+[Public Suffix List](https://github.com/publicsuffix/list) uses. MPL-2.0 is
+weak, file-based copyleft that explicitly permits embedding into proprietary
+codebases, which minimizes legal review for any vendor that has already cleared
+the PSL.
 
 A note on what is being licensed: the individual entries are _facts_ (a file has
 a given hash), which attract no copyright in the US, though a curated compilation
