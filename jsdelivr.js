@@ -59,8 +59,8 @@ async function getEntrypoints(pkg, version) {
       `${JSDELIVR_API}/packages/npm/${encoded}@${version}/entrypoints`,
       { headers: { 'User-Agent': UA }, timeout: 8000 }
     );
-    // Response: { js: { file: '/dist/...' }, css: { file: '/dist/...' } }
-    return Object.values(data)
+    // Response: { entrypoints: { js: { file: '/dist/...' }, css: { file: '/dist/...' } } }
+    return Object.values(data.entrypoints ?? data)
       .map((e) => e?.file)
       .filter((f) => f && HASHABLE.test(f));
   } catch {

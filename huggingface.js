@@ -4,7 +4,6 @@
 import axios from 'axios';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { getSha256 } from './shared.js';
 
 // Hand-curated AI model source for the Public Hash List's optional model-hub
 // section. Unlike the other sources, inclusion here is NOT gated on an objective
@@ -18,10 +17,18 @@ import { getSha256 } from './shared.js';
 // User agents SHOULD include this section but MAY omit it (see README / design
 // doc). It is emitted as a separate section in public-hash-list.dat.
 //
+// SHA-256 resolution: Hugging Face stores large files via Git LFS. The /raw/
+// endpoint returns the tiny LFS pointer file rather than the actual bytes:
+//   version https://git-lfs.github.com/spec/v1
+//   oid sha256:<64-char hex>
+//   size <bytes>
+// Swapping /resolve/ → /raw/ in the download URL fetches this pointer (~100 B)
+// and the oid IS the SHA-256 of the real file — no downloading GBs of weights.
+//
 // API: https://huggingface.co/api
 //   /models?sort=downloads&limit=N        — most-downloaded models
 //   /models/:id                           — model metadata incl. file siblings
-// Resolve: https://huggingface.co/:id/resolve/:rev/:file
+// Pointer: https://huggingface.co/:id/raw/:rev/:file   (replaces /resolve/)
 
 export const OUTPUT_CSV = 'data/huggingface-hashes.csv';
 const HF_API = 'https://huggingface.co/api';
@@ -45,7 +52,7 @@ async function getTopModels() {
 async function getModelFiles(id) {
   try {
     const { data } = await axios.get(
-      `${HF_API}/models/${encodeURIComponent(id)}`,
+      `${HF_API}/models/${id}`,
       { headers: { 'User-Agent': UA }, timeout: 8000 }
     );
     return (data.siblings || [])
@@ -53,6 +60,23 @@ async function getModelFiles(id) {
       .filter((f) => f && HASHABLE.test(f));
   } catch {
     return [];
+  }
+}
+
+// Fetch the Git LFS pointer for a /resolve/ URL and extract its SHA-256.
+// The pointer is a ~100-byte text file — no model weights are downloaded.
+async function lfsHash(resolveUrl) {
+  const rawUrl = resolveUrl.replace('/resolve/', '/raw/');
+  try {
+    const { data } = await axios.get(rawUrl, {
+      headers: { 'User-Agent': UA },
+      timeout: 8000,
+      responseType: 'text',
+    });
+    const m = data.match(/^oid sha256:([0-9a-f]{64})$/m);
+    return m ? m[1] : null;
+  } catch {
+    return null;
   }
 }
 
@@ -76,7 +100,7 @@ export async function run() {
     }
     for (const file of files) {
       const url = `${HF_HOST}/${id}/resolve/${REVISION}/${file}`;
-      const sha256 = await getSha256(url);
+      const sha256 = await lfsHash(url);
       if (sha256) {
         records.push({ url, sha256 });
         console.log(`[huggingface] [${i + 1}/${models.length}] VALID: ${url}`);

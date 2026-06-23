@@ -60,7 +60,7 @@ function buildFamilyParam({ family, variants }) {
   // Fallback for unusual variant names (e.g. icon fonts).
   if (normal.size === 0 && italic.size === 0) normal.add(400);
 
-  const name = family.replace(/ /g, '+');
+  const name = family; // URLSearchParams encodes spaces as + automatically
 
   if (italic.size > 0) {
     const axes = [
