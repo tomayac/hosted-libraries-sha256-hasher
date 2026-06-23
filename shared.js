@@ -40,6 +40,7 @@ const SOURCE_LABELS = {
   'chromium-pervasive': 'Chromium pervasive',
   'youtube-player': 'YouTube player',
   'google-maps': 'Google Maps JS API',
+  'google-fonts': 'Google Fonts',
   huggingface: 'Hugging Face Hub',
 };
 

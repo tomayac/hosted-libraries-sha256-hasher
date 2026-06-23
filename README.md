@@ -59,6 +59,7 @@ COS sharing regardless of how they are currently loaded.
 | [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h) | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-rotating URL in it; resolves the current version of Google Maps and YouTube Player from their respective bootstrap endpoints; certain hosts are excluded from pattern resolution (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/chromium-pervasive-hashes.csv) |
 | [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_ | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/youtube-player-hashes.csv) |
 | [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_ | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes the same 16 JS files per version that Chromium tracks (see below) | [`data/google-maps-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-maps-hashes.csv) |
+| [Google Fonts](https://fonts.google.com) | Fetches all font families from the Google Fonts catalog (sorted by popularity); for each family, requests the CSS2 API with all weights and styles to discover versioned `fonts.gstatic.com` woff2 URLs; hashes every unique file. Requires `GOOGLE_FONTS_API_KEY` env var (free key from Google Cloud Console). | [`data/google-fonts-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-fonts-hashes.csv) |
 | [Hugging Face Hub](https://huggingface.co) _(hand-curated, optional)_ | Lists the most-downloaded models and hashes their large weight/asset files (`.safetensors`, `.gguf`, `.onnx`, `.tflite`, `.task`, …); see [Model-hub source](#model-hub-source-hugging-face) | [`data/huggingface-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/huggingface-hashes.csv) |
 
 The first eight sources are **objective**: a resource qualifies through a
@@ -198,6 +199,32 @@ The pipeline uses three steps:
    the resolved npm names, sort descending, take the top 100, and hash all
    web-relevant files for each package's latest cdnjs version.
 
+### Google Fonts
+
+Google Fonts is the dominant public web-font CDN, serving fonts from
+`fonts.gstatic.com` across a vast fraction of the Web. Font files are
+versioned (e.g. `/s/roboto/v32/…`), so the same bytes are delivered to
+every browser that requests a given family/weight/style/subset combination
+— exactly the property that makes them safe COS candidates.
+
+The pipeline has two stages:
+
+1. **Catalog** — `GET /webfonts/v1/webfonts?key=…&sort=popularity` returns all
+   ~1,500 font families with their variant lists (weights and italic flags).
+2. **woff2 discovery** — families are batched (10 per request) into CSS2 API
+   calls (`fonts.googleapis.com/css2?family=…`) with a modern Chrome
+   `User-Agent`, which causes Google to return woff2 `@font-face` blocks.
+   Without a `text=` parameter, all Unicode subsets (latin, latin-ext,
+   cyrillic, greek, …) are included, one `@font-face` block each.
+   The `fonts.gstatic.com/…woff2` URLs are extracted from the CSS.
+3. **Hashing** — the discovered woff2 URLs are hashed concurrently (20
+   parallel downloads).
+
+The result is the SHA-256 of every woff2 file that a browser would download
+when loading any Google Font in any weight, style, or script. Requires a
+free `GOOGLE_FONTS_API_KEY` environment variable (obtainable from the Google
+Cloud Console with the Web Fonts Developer API enabled).
+
 ### Chromium-extended pipelines
 
 Chromium's pervasive resource list
@@ -264,6 +291,7 @@ npm run jsdelivr
 npm run npm-popular
 npm run chromium
 npm run youtube
+npm run google-fonts  # requires GOOGLE_FONTS_API_KEY env var
 npm run huggingface   # optional model-hub section
 ```
 

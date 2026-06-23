@@ -13,6 +13,7 @@
     "npm-popular": "node npm-popular.js",
     "chromium": "node chromium-pervasive.js",
     "youtube": "node youtube-player.js",
+    "google-fonts": "node google-fonts.js",
     "huggingface": "node huggingface.js"
   },
   "keywords": [],

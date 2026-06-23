@@ -13,6 +13,7 @@ import { run as runJsdelivr } from './jsdelivr.js';
 import { run as runMicrosoft } from './microsoft-ajax.js';
 import { run as runNpmPopular } from './npm-popular.js';
 import { run as runYouTube } from './youtube-player.js';
+import { run as runGoogleFonts } from './google-fonts.js';
 import { run as runHuggingFace } from './huggingface.js';
 
 const OUTPUT_DAT = 'data/public-hash-list.dat'; // canonical PHL output
@@ -28,6 +29,7 @@ const CORE_SOURCES = [
   ['chromium-pervasive', runChromium],
   ['youtube-player', runYouTube],
   ['google-maps', runGoogleMaps],
+  ['google-fonts', runGoogleFonts],
 ];
 const HUGGING_FACE_SOURCE = ['huggingface', runHuggingFace];
 
