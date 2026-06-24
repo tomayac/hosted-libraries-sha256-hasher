@@ -18,6 +18,7 @@ import { run as runNpmPopular } from './npm-popular.js';
 import { run as runYouTube } from './youtube-player.js';
 import { run as runGoogleFonts } from './google-fonts.js';
 import { run as runHuggingFace } from './huggingface.js';
+import { run as runManual } from './manual.js';
 
 const OUTPUT_DAT = 'data/public-hash-list.dat'; // canonical PHL output
 const OUTPUT_SHA256 = 'data/public-hash-list.dat.sha256'; // integrity file for the above
@@ -35,6 +36,7 @@ const CORE_SOURCES = [
   ['google-fonts', runGoogleFonts],
 ];
 const HUGGING_FACE_SOURCE = ['huggingface', runHuggingFace];
+const MANUAL_SOURCE = ['manual', runManual];
 
 async function collect([source, run]) {
   const records = await run();
@@ -55,15 +57,17 @@ async function main() {
 
   const coreTagged = (await Promise.all(CORE_SOURCES.map(collect))).flat();
   const hfTagged = await collect(HUGGING_FACE_SOURCE);
+  const manualTagged = await collect(MANUAL_SOURCE);
 
   const core = groupRecords(coreTagged);
   const huggingface = groupRecords(hfTagged);
+  const manual = groupRecords(manualTagged);
 
   const version = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
   const commit = commitId();
 
   // Canonical PHL flat file (the sole combined output).
-  const datContent = formatHashList({ core, huggingface, version, commit });
+  const datContent = formatHashList({ core, huggingface, manual, version, commit });
   fs.writeFileSync(OUTPUT_DAT, datContent, 'utf8');
 
   // Integrity file: SHA-256 of the canonical .dat, in standard shasum format.
@@ -72,7 +76,7 @@ async function main() {
 
   console.log(
     `\nPHL written to '${OUTPUT_DAT}': ${core.length} core entries, ` +
-      `${huggingface.length} model-hub entries.`
+      `${huggingface.length} model-hub entries, ${manual.length} manual entries.`
   );
   console.log(`SHA-256 integrity file written to '${OUTPUT_SHA256}'.`);
 }

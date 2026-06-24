@@ -14,7 +14,8 @@
     "chromium": "node chromium-pervasive.js",
     "youtube": "node youtube-player.js",
     "google-fonts": "node google-fonts.js",
-    "huggingface": "node huggingface.js"
+    "huggingface": "node huggingface.js",
+    "manual": "node manual.js"
   },
   "keywords": [],
   "author": "Thomas Steiner <tomac@google.com>",
