@@ -58,17 +58,19 @@ COS sharing regardless of how they are currently loaded.
 | [npm popularity](https://www.npmjs.com) | Ranks cdnjs-hosted packages by npm download count; hashes all web-relevant files for the top 100's latest version on cdnjs (see below) | [`data/npm-popular-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/npm-popular-hashes.csv) |
 | [Chromium pervasive resources](https://chromium.googlesource.com/chromium/src/+/lkgr/services/network/pervasive_resources/shared_resource_checker_patterns.h) | Reads Chromium's pervasive resource allowlist and hashes every concrete, versioned, non-rotating URL in it; resolves the current version of Google Maps and YouTube Player from their respective bootstrap endpoints; certain hosts are excluded from pattern resolution (see below) | [`data/chromium-pervasive-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/chromium-pervasive-hashes.csv) |
 | [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_ | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/youtube-player-hashes.csv) |
-| [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_ | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes the same 16 JS files per version that Chromium tracks (see below) | [`data/google-maps-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-maps-hashes.csv) |
+| [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_ | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes 34 JS files per version (23 on `maps.googleapis.com`, 11 on the `maps.google.com` mirror) including the files Chromium tracks plus additional API modules (see below) | [`data/google-maps-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-maps-hashes.csv) |
 | [Google Fonts](https://fonts.google.com) | Fetches all font families from the Google Fonts catalog (sorted by popularity); for each family, requests the CSS2 API with all weights and styles to discover versioned `fonts.gstatic.com` woff2 URLs; hashes every unique file. Requires `GOOGLE_FONTS_API_KEY` env var (free key from Google Cloud Console). | [`data/google-fonts-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-fonts-hashes.csv) |
 | [Hugging Face Hub](https://huggingface.co) _(hand-curated, optional)_ | Lists the most-downloaded models and hashes their large weight/asset files (`.safetensors`, `.gguf`, `.onnx`, `.tflite`, `.task`, …); see [Model-hub source](#model-hub-source-hugging-face) | [`data/huggingface-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/huggingface-hashes.csv) |
+| Manual additions | Hand-curated entries proposed via pull request and reviewed against the ubiquity criteria; see [`manual-additions.json`](manual-additions.json) and [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) | [`data/manual-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/manual-hashes.csv) |
 
-The first eight sources are **objective**: a resource qualifies through a
+The first nine sources are **objective**: a resource qualifies through a
 real-world popularity signal (CDN request volume, npm downloads, cross-CDN
-byte-identity, or browser-vendor vetting). The Hugging Face source is different —
-**hand-curated** and **optional** — and lands in its own section of the output;
-see [Model-hub source](#model-hub-source-hugging-face). This source set is not
-fixed: jsDelivr, unpkg, and web-font providers are obvious future additions, and
-adding one is a governance action, not a format change.
+byte-identity, or browser-vendor vetting). The Hugging Face and manual sources
+are different — **hand-curated** — and each land in their own section of the
+output; see [Model-hub source](#model-hub-source-hugging-face) and
+[Manual additions](#manual-additions). This source set is not fixed: unpkg and
+additional web-font providers are obvious future additions, and adding one is a
+governance action, not a format change.
 
 ## Output format
 
@@ -101,6 +103,14 @@ effectively unknowable from a snapshot scrape.
 // ===BEGIN SHA-256 HUGGING-FACE===
 // Hand-curated AI model resources. User agents SHOULD include this section; a UA MAY omit it.
 // ===END SHA-256 HUGGING-FACE===
+//
+// ===BEGIN SHA-256 MANUAL===
+// Hand-curated additions reviewed and merged via pull request.
+// See manual-additions.json and .github/PULL_REQUEST_TEMPLATE.md.
+// User agents MUST treat these as eligible (same as the core section).
+//
+6d567d7c2f46febcdeaf874614d63e3192ff3a844ee34f8bb63f4c5cf259f233
+// ===END SHA-256 MANUAL===
 ```
 
 Entries are sorted by hash, so all mirrors of one file collapse to a single
@@ -143,6 +153,47 @@ The hub is currently the Hugging Face Hub because it is today's de facto central
 hub for openly published models. The design is hub-agnostic: the inclusion basis
 is "a recognized public model hub," and additional hubs can be wired up the same
 way if the ecosystem's center of gravity shifts.
+
+### Manual additions
+
+Unlike the pipeline sources, manual additions are proposed by contributors,
+reviewed in a pull request against the same ubiquity bar the objective sources
+use, and merged by a maintainer. Once merged, `manual.js` reads
+[`manual-additions.json`](manual-additions.json) and writes
+`data/manual-hashes.csv`; that CSV is woven into `public-hash-list.dat` by the
+main pipeline under the `===BEGIN SHA-256 MANUAL===` section. User agents **MUST**
+treat entries in this section as eligible — they carry the same semantics as the
+core section.
+
+Each entry in `manual-additions.json` follows this schema:
+
+```json
+{
+  "url": "https://example.com/resource.js",
+  "sha256": "<64-char lowercase hex>",
+  "description": "Human-readable name and source",
+  "rationale": "Why this resource meets the ubiquity bar",
+  "added": "2026-06-24",
+  "pr": 42
+}
+```
+
+The `sha256` is the hash **of the file bytes at `url`** at time of submission.
+It is **not re-verified at build time** — the hash _is_ the identity, and a
+server changing the served bytes would produce a different hash that UAs would
+reject anyway. The `pr` field is the GitHub PR number that introduced the entry,
+or `null` before merge.
+
+**Inclusion bar**: the resource must be deployed across so many independent sites
+that its presence in a shared cache reveals nothing specific about a user's
+browsing history — the same bar the objective sources apply. Concrete signals
+help: estimated embedding count, CDN hit statistics, references in well-known
+open-source projects.
+
+To propose a new entry, open a pull request using the template at
+[`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md), which
+includes an independent verification command (`curl | sha256sum`) and a checklist
+reviewers use to confirm ubiquity.
 
 ## Source details
 
@@ -243,14 +294,17 @@ player version (`base.js`, `captions.js`, `www-player.css`,
 files for each. The current version's URLs appear in both outputs and are
 deduplicated in `public-hash-list.dat`.
 
-**Google Maps JavaScript API** (`google-maps.js`): Chromium tracks 16 URL
-patterns per Maps version — 14 files on `maps.googleapis.com` (`common.js`,
-`controls.js`, `geocoder.js`, `geometry.js`, `infowindow.js`, `log.js`,
-`main.js`, `map.js`, `marker.js`, `onion.js`, `places_impl.js`, `search.js`,
-`search_impl.js`, `util.js`) plus `common.js` and `util.js` on the
-`maps.google.com` mirror. `google-maps.js` probes a rolling window of quarterly
+**Google Maps JavaScript API** (`google-maps.js`): The pipeline probes 34 JS
+files per Maps version — 23 on `maps.googleapis.com` (the 14 files Chromium
+tracks: `common.js`, `controls.js`, `geocoder.js`, `geometry.js`,
+`infowindow.js`, `log.js`, `main.js`, `map.js`, `marker.js`, `onion.js`,
+`places_impl.js`, `search.js`, `search_impl.js`, `util.js`; plus 9 additional
+API modules: `directions.js`, `drawing.js`, `elevation.js`, `overlay.js`,
+`places.js`, `poly.js`, `streetview.js`, `visualization.js`, `weather.js`) and
+11 on the `maps.google.com` mirror (those same 9 additional modules plus
+`common.js` and `util.js`). `google-maps.js` probes a rolling window of quarterly
 versions (3.NN) derived from the current date, extracts each version's internal
-`(channel, release)` pair from the bootstrap self-reference, and hashes all 16
+`(channel, release)` pair from the bootstrap self-reference, and hashes all 34
 files. The version window updates automatically so no manual changes are needed
 as new versions ship.
 
@@ -311,6 +365,7 @@ npm run chromium
 npm run youtube
 npm run google-fonts  # requires GOOGLE_FONTS_API_KEY in .env
 npm run huggingface   # optional model-hub section
+npm run manual        # process manual-additions.json → data/manual-hashes.csv
 ```
 
 Any URL that returns a non-200 status or times out after 6 seconds is silently
