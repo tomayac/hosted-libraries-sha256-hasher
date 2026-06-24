@@ -46,16 +46,30 @@ async function getCurrentPlayerId() {
 }
 
 async function getHistoricalPlayerIds() {
-  try {
-    const { data } = await axios.get(PLAYER_LOG_URL, {
-      headers: { 'User-Agent': UA },
-      responseType: 'text',
-      timeout: 10000,
-    });
-    return [...new Set(data.match(/\b[0-9a-f]{8}\b/g) ?? [])];
-  } catch {
-    return [];
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const { data } = await axios.get(PLAYER_LOG_URL, {
+        headers: { 'User-Agent': UA },
+        responseType: 'text',
+        timeout: 15000,
+      });
+      // IDs appear in href attributes: /s/player/<8-hex-chars>/
+      const ids = [...new Set(
+        [...data.matchAll(/\/s\/player\/([0-9a-f]{8})\//g)].map((m) => m[1])
+      )];
+      console.log(`[youtube] ${ids.length} historical IDs found at ${PLAYER_LOG_URL}`);
+      return ids;
+    } catch (err) {
+      const reason = err.message || err.code || 'unknown';
+      if (attempt < 3) {
+        console.log(`[youtube] Historical ID fetch attempt ${attempt} failed (${reason}), retrying in ${attempt * 2}s...`);
+        await new Promise((r) => setTimeout(r, attempt * 2000));
+      } else {
+        console.log(`[youtube] Historical ID fetch failed after 3 attempts: ${reason}`);
+      }
+    }
   }
+  return [];
 }
 
 export async function run() {
@@ -67,7 +81,6 @@ export async function run() {
     `[youtube] Fetching historical player IDs from ${PLAYER_LOG_URL}...`
   );
   const historicalIds = await getHistoricalPlayerIds();
-  console.log(`[youtube] ${historicalIds.length} historical IDs found`);
 
   const ids = [...new Set([currentId, ...historicalIds])];
   const totalUrls = ids.length * PLAYER_FILES.length;

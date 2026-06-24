@@ -32,12 +32,24 @@ const BOOTSTRAP_URL = 'https://maps.googleapis.com/maps/api/js';
 // The :v3 intl/* variants are omitted — they require a locale substitution
 // that isn't resolved by getMapsVersions() and return 404 without an API key.
 const MAPS_FILES = [
-  // maps.google.com mirror (2 files)
+  // maps.google.com mirror (11 files)
   (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/common.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/directions.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/drawing.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/elevation.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/overlay.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/places.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/poly.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/streetview.js`,
   (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/util.js`,
-  // maps.googleapis.com (14 files)
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/visualization.js`,
+  (v1, v2) => `https://maps.google.com/maps-api-v3/api/js/${v1}/${v2}/weather.js`,
+  // maps.googleapis.com (23 files)
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/common.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/controls.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/directions.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/drawing.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/elevation.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/geocoder.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/geometry.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/infowindow.js`,
@@ -46,10 +58,16 @@ const MAPS_FILES = [
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/map.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/marker.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/onion.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/overlay.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/places.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/places_impl.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/poly.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/search.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/search_impl.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/streetview.js`,
   (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/util.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/visualization.js`,
+  (v1, v2) => `https://maps.googleapis.com/maps-api-v3/api/js/${v1}/${v2}/weather.js`,
 ];
 
 // Quarterly versions to probe. Google keeps the 4 most recent; we probe a

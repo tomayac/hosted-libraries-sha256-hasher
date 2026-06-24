@@ -26,41 +26,50 @@ import { fileURLToPath } from 'url';
 // and the oid IS the SHA-256 of the real file — no downloading GBs of weights.
 //
 // API: https://huggingface.co/api
-//   /models?sort=downloads&limit=N        — most-downloaded models
-//   /models/:id                           — model metadata incl. file siblings
+//   /models?sort=downloads&full=true&limit=1000  — paginated (cursor via Link header);
+//     full=true includes siblings so no per-model API call is needed
 // Pointer: https://huggingface.co/:id/raw/:rev/:file   (replaces /resolve/)
 
 export const OUTPUT_CSV = 'data/huggingface-hashes.csv';
 const HF_API = 'https://huggingface.co/api';
 const HF_HOST = 'https://huggingface.co';
-const TOP_N = 100;
+const MAX_MODELS = 10_000;   // cap at 10K (top by downloads)
+const PAGE_SIZE = 1_000;     // models per paginated request (HF API max)
+const LFS_CONCURRENCY = 50;  // parallel LFS pointer fetches
 const REVISION = 'main';
 const UA =
   'public-hash-list (https://github.com/tomayac/public-hash-list)';
 // Large, byte-identical weight/asset formats worth deduplicating via COS.
 const HASHABLE = /\.(safetensors|bin|gguf|onnx|tflite|task|pt|npz|model)$/i;
 
-async function getTopModels() {
-  const { data } = await axios.get(`${HF_API}/models`, {
-    params: { sort: 'downloads', direction: -1, limit: TOP_N },
-    headers: { 'User-Agent': UA },
-    timeout: 8000,
-  });
-  return data.map((m) => m.modelId || m.id).filter(Boolean);
-}
+// Fetch up to MAX_MODELS model records (with siblings) via cursor pagination.
+// Using full=true so siblings are included in the list response — avoids a
+// separate per-model API call for every entry.
+async function fetchModels() {
+  const models = [];
+  let nextUrl = `${HF_API}/models`;
+  let params = { sort: 'downloads', direction: -1, limit: PAGE_SIZE, full: true };
+  let page = 0;
 
-async function getModelFiles(id) {
-  try {
-    const { data } = await axios.get(
-      `${HF_API}/models/${id}`,
-      { headers: { 'User-Agent': UA }, timeout: 8000 }
-    );
-    return (data.siblings || [])
-      .map((s) => s.rfilename)
-      .filter((f) => f && HASHABLE.test(f));
-  } catch {
-    return [];
+  while (models.length < MAX_MODELS) {
+    const { data, headers } = await axios.get(nextUrl, {
+      params,
+      headers: { 'User-Agent': UA },
+      timeout: 30000,
+    });
+    models.push(...data);
+    page++;
+    console.log(`[huggingface] Page ${page}: ${data.length} models (${models.length} total)`);
+    if (data.length < PAGE_SIZE) break;
+
+    // Cursor URL from Link: <url>; rel="next"
+    const cursor = headers.link?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
+    if (!cursor) break;
+    nextUrl = cursor;
+    params = undefined; // cursor URL already encodes all params
   }
+
+  return models.slice(0, MAX_MODELS);
 }
 
 // Fetch the Git LFS pointer for a /resolve/ URL and extract its SHA-256.
@@ -81,34 +90,61 @@ async function lfsHash(resolveUrl) {
 }
 
 export async function run() {
-  console.log(`[huggingface] Fetching top ${TOP_N} models by downloads...`);
+  console.log(`[huggingface] Fetching up to ${MAX_MODELS.toLocaleString()} models by downloads...`);
   let models;
   try {
-    models = await getTopModels();
+    models = await fetchModels();
   } catch (err) {
     console.log(`[huggingface] SKIP: hub unreachable (${err.message}).`);
     return [];
   }
+  console.log(`[huggingface] ${models.length} models fetched.`);
 
-  const records = [];
-  for (let i = 0; i < models.length; i++) {
-    const id = models[i];
-    const files = await getModelFiles(id);
-    if (!files.length) {
-      console.log(`[huggingface] SKIP ${id}: no hashable weight files`);
-      continue;
-    }
+  // Build the list of all (url) tuples to hash.
+  const entries = [];
+  let skipped = 0;
+  for (const m of models) {
+    const id = m.modelId || m.id;
+    if (!id) continue;
+    const files = (m.siblings || [])
+      .map((s) => s.rfilename)
+      .filter((f) => f && HASHABLE.test(f));
+    if (!files.length) { skipped++; continue; }
     for (const file of files) {
-      const url = `${HF_HOST}/${id}/resolve/${REVISION}/${file}`;
+      entries.push({ url: `${HF_HOST}/${id}/resolve/${REVISION}/${file}` });
+    }
+  }
+  console.log(
+    `[huggingface] ${entries.length} hashable files across ${models.length - skipped} models ` +
+    `(${skipped} skipped — no weight files). Hashing with concurrency=${LFS_CONCURRENCY}...`
+  );
+
+  // Hash all LFS pointers with bounded concurrency.
+  const records = [];
+  let idx = 0;
+  let valid = 0;
+  let omitted = 0;
+
+  async function worker() {
+    while (idx < entries.length) {
+      const i = idx++;
+      const { url } = entries[i];
       const sha256 = await lfsHash(url);
       if (sha256) {
         records.push({ url, sha256 });
-        console.log(`[huggingface] [${i + 1}/${models.length}] VALID: ${url}`);
+        valid++;
       } else {
-        console.log(`[huggingface] [${i + 1}/${models.length}] OMITTED: ${url}`);
+        omitted++;
+      }
+      if ((i + 1) % 1000 === 0 || i + 1 === entries.length) {
+        console.log(`[huggingface]   ${i + 1}/${entries.length} processed (${valid} valid, ${omitted} omitted)`);
       }
     }
   }
+
+  await Promise.all(
+    Array.from({ length: Math.min(LFS_CONCURRENCY, entries.length) }, worker)
+  );
 
   records.sort((a, b) => a.sha256.localeCompare(b.sha256));
   fs.mkdirSync('data', { recursive: true });
