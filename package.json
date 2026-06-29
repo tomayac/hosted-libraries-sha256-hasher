@@ -15,6 +15,7 @@
     "youtube": "node youtube-player.js",
     "google-fonts": "node google-fonts.js",
     "huggingface": "node huggingface.js",
+    "http-archive": "node http-archive.js",
     "manual": "node manual.js"
   },
   "keywords": [],

@@ -64,6 +64,7 @@ COS sharing regardless of how they are currently loaded.
 | [YouTube Player](https://www.youtube.com/iframe_api) _(extends Chromium)_ | Discovers all historical player IDs from [nadeko.net](https://youtube-player-ids.nadeko.net/) in addition to the current one; hashes the same five file types per version that Chromium tracks (see below) | [`data/youtube-player-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/youtube-player-hashes.csv) |
 | [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) _(extends Chromium)_ | Probes all currently available quarterly versions (3.NN) via their versioned bootstrap URLs; hashes 34 JS files per version (23 on `maps.googleapis.com`, 11 on the `maps.google.com` mirror) including the files Chromium tracks plus additional API modules (see below) | [`data/google-maps-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-maps-hashes.csv) |
 | [Google Fonts](https://fonts.google.com) | Fetches all font families from the Google Fonts catalog (sorted by popularity); for each family, requests the CSS2 API with all weights and styles to discover versioned `fonts.gstatic.com` woff2 URLs; hashes every unique file. Requires `GOOGLE_FONTS_API_KEY` env var (free key from Google Cloud Console). | [`data/google-fonts-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/google-fonts-hashes.csv) |
+| [HTTP Archive](https://httparchive.org) | Reads maintainer-run BigQuery query results (see [`queries/http-archive.sql`](queries/http-archive.sql)) published as a world-readable Google Sheet; takes hashes present on ≥100 independent origins (the k-anonymity gate is enforced in the query). No network downloads — the HTTP Archive crawl already provides the SHA-256 of every response body. | [`data/http-archive-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/http-archive-hashes.csv) |
 | [Hugging Face Hub](https://huggingface.co) _(hand-curated, optional)_ | Lists the most-downloaded models and hashes their large weight/asset files (`.safetensors`, `.gguf`, `.onnx`, `.tflite`, `.task`, …); see [Model-hub source](#model-hub-source-hugging-face) | [`data/huggingface-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/huggingface-hashes.csv) |
 | Manual additions | Hand-curated entries proposed via pull request and reviewed against the ubiquity criteria; see [`manual-additions.json`](manual-additions.json) and [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) | [`data/manual-hashes.csv`](https://github.com/tomayac/public-hash-list/blob/main/data/manual-hashes.csv) |
 
@@ -280,6 +281,32 @@ when loading any Google Font in any weight, style, or script. Requires a
 free `GOOGLE_FONTS_API_KEY` environment variable (obtainable from the Google
 Cloud Console with the Web Fonts Developer API enabled).
 
+### HTTP Archive
+
+The [HTTP Archive](https://httparchive.org/) crawls millions of URLs monthly
+using [WebPageTest](https://www.webpagetest.org/) and records the SHA-256 hash
+of every response body in the `payload._body_hash` BigQuery field. Because the
+HTTP Archive already computes these hashes from real browser crawl data, this
+pipeline requires no network downloads of its own.
+
+The eligibility criterion mirrors the rest of the PHL: a resource qualifies if
+its hash appears across **≥100 independent origins** (`NET.HOST(url)`) in the
+crawl data. This is the k-anonymity privacy gate — a file that widespread cannot
+serve as a cross-site identifier. The query also applies a traffic-weighted score
+(`SUM(100_000 / min_rank)`) so that resources carried by high-traffic pages rank
+highest. Only `script`, `css`, `font`, and `wasm` response types are included.
+
+The BigQuery query is stored in [`queries/http-archive.sql`](queries/http-archive.sql)
+and is intended to be run monthly against `httparchive.crawl.requests` at
+`date = DATE_TRUNC(CURRENT_DATE(), MONTH)`. Results are published by the
+maintainer as a world-readable Google Sheet:
+
+- **Sheet**: <https://docs.google.com/spreadsheets/d/1Cw4wguQ0X4xMqZlTRYlo6OHQaUr7UVYlFZaIQkXK2Jw/edit?usp=sharing>
+
+`http-archive.js` fetches the published CSV export of that sheet, validates that
+each `body_hash` is a well-formed 64-character lowercase hex string, and writes
+`data/http-archive-hashes.csv`. No API key is required.
+
 ### Chromium-extended pipelines
 
 Chromium's pervasive resource list
@@ -367,7 +394,8 @@ npm run jsdelivr
 npm run npm-popular
 npm run chromium
 npm run youtube
-npm run google-fonts  # requires GOOGLE_FONTS_API_KEY in .env
+npm run google-fonts   # requires GOOGLE_FONTS_API_KEY in .env
+npm run http-archive  # reads maintainer-published BigQuery results from Google Sheets
 npm run huggingface   # optional model-hub section
 npm run manual        # process manual-additions.json → data/manual-hashes.csv
 ```

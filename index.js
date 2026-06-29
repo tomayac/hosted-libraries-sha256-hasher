@@ -18,6 +18,7 @@ import { run as runNpmPopular } from './npm-popular.js';
 import { run as runYouTube } from './youtube-player.js';
 import { run as runGoogleFonts } from './google-fonts.js';
 import { run as runHuggingFace } from './huggingface.js';
+import { run as runHttpArchive } from './http-archive.js';
 import { run as runManual } from './manual.js';
 
 const OUTPUT_DAT = 'data/public-hash-list.dat'; // canonical PHL output
@@ -34,6 +35,7 @@ const CORE_SOURCES = [
   ['youtube-player', runYouTube],
   ['google-maps', runGoogleMaps],
   ['google-fonts', runGoogleFonts],
+  ['http-archive', runHttpArchive],
 ];
 const HUGGING_FACE_SOURCE = ['huggingface', runHuggingFace];
 const MANUAL_SOURCE = ['manual', runManual];

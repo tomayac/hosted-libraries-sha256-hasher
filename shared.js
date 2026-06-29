@@ -41,6 +41,7 @@ const SOURCE_LABELS = {
   'youtube-player': 'YouTube player',
   'google-maps': 'Google Maps JS API',
   'google-fonts': 'Google Fonts',
+  'http-archive': 'HTTP Archive',
   huggingface: 'Hugging Face Hub',
   manual: 'Manual addition',
 };
