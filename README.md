@@ -404,6 +404,11 @@ Any URL that returns a non-200 status or times out after 6 seconds is silently
 omitted. For the Google Hosted Libraries CDN, known historical filename changes
 (MooTools, Indefinite Observable) are handled via fallback URL resolution.
 
+## Acknowledgements
+
+Thanks to [Max Ostapenko](https://github.com/max-ostapenko) for the HTTP Archive
+BigQuery query that powers the `http-archive` pipeline.
+
 ## License
 
 This repository — both the **tooling** (scrapers, `index.js`) and the
