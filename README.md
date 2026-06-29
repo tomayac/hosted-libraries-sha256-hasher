@@ -10,7 +10,8 @@ files (`.js`, `.css`, `.wasm`, web fonts, `.json`, `.svg`, pre-compressed `.gz`)
 and computes each file's SHA-256 hash. The output is the **Public Hash List
 (PHL)** — a [Public Suffix List](https://github.com/publicsuffix/list)-style flat
 file that serves as the availability-gating allowlist for the
-[Cross-Origin Storage (COS) API](https://wicg.github.io/cross-origin-storage/).
+[Cross-Origin Storage (COS) API](https://wicg.github.io/cross-origin-storage/),
+a content-addressable cache for the web.
 
 The hash algorithm is currently **SHA-256** (matching COS's requirement that a
 hash value be a 64-character lowercase hex string), but the format carries the
@@ -30,7 +31,10 @@ The mitigation is an allowlist of _well-known_ resources — files so widely
 deployed that their presence in the cache tells an attacker nothing specific
 about a user's browsing history. This project generates that allowlist by
 gathering SHA-256 hashes from hand-curated CDNs and ranking candidates by
-real-world popularity.
+real-world popularity. Revealing a file's presence only once it has been
+encountered across a sufficiently large number of independent origins is a form
+of **k-anonymity**: no resource in the list is associated with a small enough
+set of sites to act as a cross-site identifier.
 
 ## This works today
 
