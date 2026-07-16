@@ -18,6 +18,25 @@ hash value be a 64-character lowercase hex string), but the format carries the
 algorithm explicitly so it can migrate later without a redesign — see
 [Output format](#output-format).
 
+## Relationship to the official PHL proposal
+
+The design rationale, requirements, and governance model for the PHL are
+formally written up in the
+[PHL explainer](https://github.com/WICG/cross-origin-storage/blob/main/public-hash-list/phl-explainer.md),
+a companion document to the Cross-Origin Storage explainer/spec published in
+the [WICG/cross-origin-storage](https://github.com/WICG/cross-origin-storage)
+repository. This repository is named there as the proposal's **early
+implementation**.
+
+The explainer's [Governance](https://github.com/WICG/cross-origin-storage/blob/main/public-hash-list/phl-explainer.md#governance)
+section describes a target end state — a dedicated repository hosted under
+the WHATWG, with editors from at least two browser vendors and a file signed
+with WHATWG infrastructure keys — that this repository does not yet
+implement. Until that materializes, this repository is maintained informally,
+following the explainer's methodology (source selection, inclusion criteria,
+data format) as closely as practical, including the [manual additions](#manual-additions)
+process the explainer notes "has not yet been designed" at the proposal level.
+
 ## Why this matters for Cross-Origin Storage
 
 COS lets browsers share cached files across origins by SHA-256 hash, so a large
