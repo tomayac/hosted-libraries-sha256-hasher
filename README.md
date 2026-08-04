@@ -100,7 +100,12 @@ governance action, not a format change.
 
 The canonical output is the Public Hash List at
 [`data/public-hash-list.dat`](https://github.com/tomayac/public-hash-list/blob/main/data/public-hash-list.dat),
-a flat text file modeled on the Public Suffix List. The design rationale: a user
+a flat text file modeled on the Public Suffix List. Everything under `data/`
+is stored with [Git LFS](https://git-lfs.com/), so `raw.githubusercontent.com`
+links resolve to an LFS pointer, not the file content; fetch the real bytes from
+`media.githubusercontent.com` instead, e.g.
+[`media.githubusercontent.com/media/tomayac/public-hash-list/refs/heads/main/data/public-hash-list.dat`](https://media.githubusercontent.com/media/tomayac/public-hash-list/refs/heads/main/data/public-hash-list.dat).
+The design rationale: a user
 agent needs exactly one thing at runtime — _given a hash, is it on the list?_ —
 so the machine-readable payload is just bare lowercase SHA-256 digests, one per
 line. Everything else (which source vouched for an entry, a representative URL)
@@ -396,6 +401,11 @@ Sources without an API key in `.env` are skipped gracefully with a log
 message; they do not abort the full pipeline.
 
 ## Usage
+
+Requires [Git LFS](https://git-lfs.com/) (`brew install git-lfs` or see the
+[install docs](https://git-lfs.com/)) — everything under `data/` is stored
+with it, so run `git lfs install` once per machine before cloning, or run
+`git lfs pull` after a clone that predates having it installed.
 
 ```bash
 npm install
