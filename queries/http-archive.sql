@@ -11,10 +11,8 @@
 -- hashes carried by high-traffic pages to the top of the list.
 --
 -- Run monthly in BigQuery against the httparchive.crawl.requests table.
--- Results are published as a world-readable Google Sheet:
---   https://docs.google.com/spreadsheets/d/1Cw4wguQ0X4xMqZlTRYlo6OHQaUr7UVYlFZaIQkXK2Jw/edit?usp=sharing
--- The CSV export used by http-archive.js:
---   https://docs.google.com/spreadsheets/d/e/2PACX-1vTOcTespiVHDRLIq16_3GsnnvJmut00x0fzWTLXSWBNya6Go_1kBrGoVJvxb8gEaP_L9FfKmXy3-kF-/pub?output=csv
+-- Results are published directly by the HTTP Archive, fetched by http-archive.js:
+--   https://cdn.httparchive.org/v1/static/reports/public_hash_list.csv
 
 WITH request_origins AS (
   SELECT
