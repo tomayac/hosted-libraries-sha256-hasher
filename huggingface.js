@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
 // and additional hubs can be wired up the same way if the ecosystem shifts.
 //
 // User agents SHOULD include this section but MAY omit it (see README / design
-// doc). It is emitted as a separate section in public-hash-list.dat.
+// doc). It is emitted as a separate section in public-hash-list-lfs.dat.
 //
 // SHA-256 resolution: Hugging Face stores large files via Git LFS. The /raw/
 // endpoint returns the tiny LFS pointer file rather than the actual bytes:

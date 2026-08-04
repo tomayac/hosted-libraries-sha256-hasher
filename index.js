@@ -5,6 +5,7 @@
 try { process.loadEnvFile(); } catch {}
 
 import fs from 'fs';
+import path from 'path';
 import crypto from 'crypto';
 import { execSync } from 'child_process';
 import { groupRecords, formatHashList } from './shared.js';
@@ -21,8 +22,11 @@ import { run as runHuggingFace } from './huggingface.js';
 import { run as runHttpArchive } from './http-archive.js';
 import { run as runManual } from './manual.js';
 
-const OUTPUT_DAT = 'data/public-hash-list.dat'; // canonical PHL output
-const OUTPUT_SHA256 = 'data/public-hash-list.dat.sha256'; // integrity file for the above
+// data/public-hash-list.dat (no -lfs suffix) is a frozen legacy snapshot kept
+// as a plain Git blob for pre-migration consumers; it is no longer written by
+// this pipeline. See .gitattributes and README.md ("Output format").
+const OUTPUT_DAT = 'data/public-hash-list-lfs.dat'; // canonical PHL output
+const OUTPUT_SHA256 = 'data/public-hash-list-lfs.dat.sha256'; // integrity file for the above
 
 // Core (objective, popularity-based) sources and the optional model-hub source.
 const CORE_SOURCES = [
@@ -74,7 +78,7 @@ async function main() {
 
   // Integrity file: SHA-256 of the canonical .dat, in standard shasum format.
   const datHash = crypto.createHash('sha256').update(datContent, 'utf8').digest('hex');
-  fs.writeFileSync(OUTPUT_SHA256, `${datHash}  public-hash-list.dat\n`, 'utf8');
+  fs.writeFileSync(OUTPUT_SHA256, `${datHash}  ${path.basename(OUTPUT_DAT)}\n`, 'utf8');
 
   console.log(
     `\nPHL written to '${OUTPUT_DAT}': ${core.length} core entries, ` +

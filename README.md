@@ -98,13 +98,23 @@ governance action, not a format change.
 
 ## Output format
 
-The canonical output is the Public Hash List at
-[`data/public-hash-list.dat`](https://github.com/tomayac/public-hash-list/blob/main/data/public-hash-list.dat),
+The canonical, continuously updated output is the Public Hash List at
+[`data/public-hash-list-lfs.dat`](https://github.com/tomayac/public-hash-list/blob/main/data/public-hash-list-lfs.dat),
 a flat text file modeled on the Public Suffix List. Everything under `data/`
 is stored with [Git LFS](https://git-lfs.com/), so `raw.githubusercontent.com`
 links resolve to an LFS pointer, not the file content; fetch the real bytes from
 `media.githubusercontent.com` instead, e.g.
-[`media.githubusercontent.com/media/tomayac/public-hash-list/refs/heads/main/data/public-hash-list.dat`](https://media.githubusercontent.com/media/tomayac/public-hash-list/refs/heads/main/data/public-hash-list.dat).
+[`media.githubusercontent.com/media/tomayac/public-hash-list/refs/heads/main/data/public-hash-list-lfs.dat`](https://media.githubusercontent.com/media/tomayac/public-hash-list/refs/heads/main/data/public-hash-list-lfs.dat).
+
+`data/public-hash-list.dat` (no `-lfs` suffix) also still exists, but as a
+**frozen legacy snapshot**: a plain (non-LFS) Git blob, pinned at whatever
+content it held when the `-lfs` split happened, kept only so that
+`raw.githubusercontent.com` URLs hardcoded into consumers built before this
+split (which expect real bytes at that exact path) keep resolving to a valid,
+if increasingly stale, list instead of an LFS pointer. It is not written by
+this pipeline and will not receive further updates — point any new or updated
+consumer at `public-hash-list-lfs.dat` instead.
+
 The design rationale: a user
 agent needs exactly one thing at runtime — _given a hash, is it on the list?_ —
 so the machine-readable payload is just bare lowercase SHA-256 digests, one per
@@ -189,7 +199,7 @@ Unlike the pipeline sources, manual additions are proposed by contributors,
 reviewed in a pull request against the same ubiquity bar the objective sources
 use, and merged by a maintainer. Once merged, `manual.js` reads
 [`manual-additions.json`](manual-additions.json) and writes
-`data/manual-hashes.csv`; that CSV is woven into `public-hash-list.dat` by the
+`data/manual-hashes.csv`; that CSV is woven into `public-hash-list-lfs.dat` by the
 main pipeline under the `===BEGIN SHA-256 MANUAL===` section. User agents **MUST**
 treat entries in this section as eligible — they carry the same semantics as the
 core section.
@@ -347,7 +357,7 @@ player version (`base.js`, `captions.js`, `www-player.css`,
 `youtube-player.js` fetches all historical player IDs from
 [nadeko.net](https://youtube-player-ids.nadeko.net/) and hashes the same five
 files for each. The current version's URLs appear in both outputs and are
-deduplicated in `public-hash-list.dat`.
+deduplicated in `public-hash-list-lfs.dat`.
 
 **Google Maps JavaScript API** (`google-maps.js`): The pipeline probes 34 JS
 files per Maps version — 23 on `maps.googleapis.com` (the 14 files Chromium
@@ -411,7 +421,7 @@ with it, so run `git lfs install` once per machine before cloning, or run
 npm install
 
 # Run all sources and produce the Public Hash List and its SHA-256 integrity file
-# Outputs: data/public-hash-list.dat  data/public-hash-list.dat.sha256
+# Outputs: data/public-hash-list-lfs.dat  data/public-hash-list-lfs.dat.sha256
 npm start
 
 # Run a single source only
@@ -441,7 +451,7 @@ BigQuery query that powers the `http-archive` pipeline.
 ## License
 
 This repository — both the **tooling** (scrapers, `index.js`) and the
-**generated data file** (`data/public-hash-list.dat`) — is licensed under
+**generated data file** (`data/public-hash-list-lfs.dat`) — is licensed under
 **[MPL-2.0](LICENSE)**, the same license the
 [Public Suffix List](https://github.com/publicsuffix/list) uses. MPL-2.0 is
 weak, file-based copyleft that explicitly permits embedding into proprietary
