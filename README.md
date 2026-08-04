@@ -5,6 +5,13 @@
 
 # Public Hash List
 
+> **Archived.** This repository has been folded into
+> [WICG/cross-origin-storage](https://github.com/WICG/cross-origin-storage), at
+> [`public-hash-list/implementation/`](https://github.com/WICG/cross-origin-storage/tree/main/public-hash-list/implementation).
+> Development continues there. URLs into this repository keep resolving to a
+> frozen snapshot of the code and data as of the archive date, but nothing here
+> will be updated further.
+
 Scrapes popular CDN catalogs and npm popularity rankings, downloads web-relevant
 files (`.js`, `.css`, `.wasm`, web fonts, `.json`, `.svg`, pre-compressed `.gz`),
 and computes each file's SHA-256 hash. The output is the **Public Hash List
